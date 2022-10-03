@@ -1,0 +1,28 @@
+Attribute	Reported options	Description	Ranking criteria
+Protein		Uniprot accession
+Peptide		The amino acid sequence of the peptide
+Length		Peptide length
+mergerow{4}Source	sample	Peptide identified in user's DDA data	green
+	sample, SRM Atlas	Peptide identified in user's DDA data and in SRM atlas	green
+	SRM Atlas	Peptide identified in SRM Atlas	yellow
+	in-silico digestion	Peptide identified by in-silico digestion	red
+mergerow{4}Intensity quartile	1	The peptide intensity in Q1 is the least intense compared to others peptides from same protein in DDA data set	red
+	2	The peptide intensity in Q2 is more intense than Q1 compared to other peptides from the same protein in DDA data set	red
+	3	The peptide intensity in Q3 is more intense than Q2 compared to others peptides from the same protein in DDA data set	green
+	4	The peptide intensity in Q4 is the most intense compared to others peptides from the same protein in DDA data set	green
+mergerow{2}Samples with valid intensity values	number	The number of samples in the DDA data in which the peptide was identified	green
+	-	The peptide was not identified in the DDA data	red
+mergerow{3}MQ Unique (Groups)	yes	The peptide is unique to a single protein group in the protein Groups file	green
+	no	The peptide is not unique to a single protein group in the protein Groups file	red
+	-	There is no data for the peptide	yellow
+mergerow{3}MQ Unique (Proteins)	yes	The peptide is unique to a single protein sequence in the fasta file	green
+	no	The peptide is not unique to a single protein sequence in the fasta file	red
+	-	There is no data for the peptide	yellow
+mergerow{2}PTMs	type and position of PTMs	Post-translational modifications including the residue position in the protein	red
+	-	There are no PTMs reported in Uniprot for the peptide	green
+mergerow{2}PTM evidences	Non-experimental evidence	Predicted PTM (Uniprot Database)	mergerow{2}green if none, red otherwise
+	experimental evidence	Evidence of experimental PTMs (Uniprot Database)	
+Methionines	number	The number of methionine residues in the peptide sequence	green if zero or red if greater than zero
+missing cleavages	number	The number of missed enzymatic cleavages	green if zero or red if greater than zero
+first aa	amino acid	The amino acid in the first position of the peptide sequence. Basic AAs and dibasic AAs (D, E, K, R) or proline (P) in this position indicate a probable missed enzymatic cleavage	red if D, E, K, R or P, green otherwise
+next aa	amino acid	The amino acid that follows the last amino acid of the peptide. Basic AAs and dibasic AAs (D, E, K, R) or proline in this position indicate a probable missed enzymatic cleavage	red if D, E, K, R or P, green otherwise

@@ -1,0 +1,68 @@
+
+body,p,h1,table,td,th,ul,ol,textarea,input,iframe 
+{font-family:verdana,helvetica,arial,sans-serif;word-wrap:normal;}
+
+body {font-size:15px; color:#000000; background-color:#e0e0e0; margin:0px;} 
+
+h1 {font-size:160%; margin-top:0px; font-weight:normal}
+
+table,th,td,textarea,input,select,.button,.in {font-size:100%}
+
+div {border:0px solid red; width:100%}
+
+img {border:0px solid black;}
+
+a:link,a:visited {color:#000000; background-color:transparent}
+
+a:hover,a:active {color:#0000dd; background-color:transparent}
+
+table.grid {border-collapse:collapse;}
+
+table.grid, th.grid, td.grid {border:1px solid black;}
+
+td.grid, th.grid {padding-right:8px; padding-left:8px;}
+
+th.grid {background-color:#808080; color:white;}
+
+div.f95 {position:relative; width:90%; margin:50px;}
+
+.tab {
+  overflow: hidden;
+  border: 1px solid #cccccc;
+  background-color: #f1f1f1;
+}
+
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+.tab button:hover {
+  background-color: #dddddd;
+}
+
+.tab button.active {
+  background-color: #cccccc; 
+}
+
+.tabcontent {
+  display: none;
+  padding: 20px 0px 0px 0px;
+  border: 0px solid #cccccc;
+  border-top: none;
+}
+
+.tabcontent {
+  animation: fadeEffect 1s; 
+}
+
+@keyframes fadeEffect {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}

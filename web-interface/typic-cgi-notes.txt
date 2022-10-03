@@ -1,0 +1,59 @@
+----------------------------------------------------------------------
+Web interface for Typic 
+This file is part of Typic version 6.
+
+
+This folder contains a cgi web interface to Typic.
+
+To run Typic through the web, a webserver (as Apache) must be set to
+execute *.cgi files and to grant access to files with names *.css and
+*.js.  All the rest may be denied.
+
+There are three major components:
+
+1) the frontend typic.cgi, that will be executed as the webserver
+user.
+
+2) typic-daemon, that dispatches typic.pl on data received by typic.cgi
+and should be executed as a regular user.
+
+3) typic-dwn.cgi, that uploads finished jobs to users.
+
+Write permission must be granted for the webserver group to access the
+files typic.log and typic.jobs, so that both typic.cgi and
+typic-daemon may write to them.
+
+typic-daemon uses sendmail to send emails. It must be properly set.
+
+typic.cgi, typic-daemon and typic-dwn.cgi depend on the following Perl
+packages:
+
+CGI
+Encode
+Fcntl
+POSIX 
+Time::Local
+Archive::Zip 
+
+Selection options in the web interface are configured through files 
+
+slct-contaminants.txt
+slct-irts.txt
+slct-proteomes.txt
+slct-srms.txt
+
+that have, in each row, a file name, a space and the selection tag.
+
+The files in the "program" folder must also be copied to the same
+folder having the files in the folder "web-interface".
+
+Some variables in the first lines of typic.cgi, typic-daemon and
+typic-dwn.cgi may be of interest, particularly $ecof and $datad in
+typic.cgi.
+
+The policies for user data clean-up and downloaded data update have to
+be defined by the site owner and taken care by an external mechanism,
+for instance, by a bash script triggered by cron.
+
+----------------------------------------------------------------------
+This is the end of typic-cgi-notes.txt

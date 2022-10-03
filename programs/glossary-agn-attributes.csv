@@ -1,0 +1,28 @@
+Attribute	Attribute description
+Protein	Uniprot accession
+Peptide	The amino acid sequence of the peptide
+Length	Peptide sequence length (number of amino acid residues)
+Position	The peptide position in the protein sequence.  The type of occurrence, exact or inexact, is indicated
+Source of peptide identification	The source of peptide identification, which may be DDA sample, SRM data or in-silico digestion
+Quantitative information	Quantitative data for the peptide, that may be intensity, peptide spectrum match or spectrum count
+Q.i. quartile	Peptide quantitative data rank with respect to the quantitative data of other peptides from the same protein (based on DDA user data)
+Occurrences in proteome sequences	The number of occurrences of the peptide in sequences of the reference proteome
+IDs of proteome sequences	At most 5 IDs of sequences in the reference proteome where the peptide occurs
+Occurrences in gene sequences	The number of occurrences of the peptide in distinct genes of the reference proteome identified by a GN label
+IDs of gene sequences	At most 5 IDs of genes in the reference proteome where the peptide occurs
+PTMs	A list of post-translational modifications including the peptide
+PTM evidences	The source of post-translational modifications (experimental, non-experimental)
+Occurrences in contaminant sequences	The number of occurrences of the peptide in contaminant sequences.	
+Methionines	The number of methionine residues in the peptide sequence
+Methionine positions	The position of methionine residues in the peptide sequence
+Missing cleavages	The number of missing trypsin cleavages
+Missing cleavage positions	The position of the missing cleavage site in the peptide sequence
+Retention time	The experimental retention time in the elution profile of the precursor ion in minutes
+Hydrophobicity index	A measure of relative hydrophobicity evaluated based only on amino acid composition
+Theoretical retention time (wrt samples)	A theoretical retention time for the peptide based on the hydrophobicity index and on experimental retention times of samples
+Theoretical retention time (wrt iRT)	A theoretical retention time for the peptide based on the hydrophobicity index and on experimental retention times of iRTs
+Previous aa	The amino acid that precedes the first amino acid of the peptide
+First aa	The first amino acid of the peptide
+Last aa	The last amino acid of the peptide
+Next aa	The amino acid that follows the last amino acid of the peptide
+Instruments reported in PeptideAtlas experiments	A list of instrument names with which the peptide was detected as reported by PeptideAtlas (for peptides in sample or SRM Atlas)

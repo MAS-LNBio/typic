@@ -1,0 +1,15 @@
+Attribute	Reported options	Description	Ranking criteria
+Protein		Uniprot accession
+Peptide		The amino acid sequence of the peptide
+Length		Peptide length
+mergerow{2}Source	SRM Atlas	Peptide identified in SRM Atlas	yellow
+	in-silico digestion	Peptide identified by in-silico digestion	red
+Occurrences in proteome sequences	number	The number of occurrences of the peptide in sequences of the reference proteome	red if greater than 1, green otherwise
+mergerow{2}PTMs	type and position of PTMs	Post-translational modifications including the residue position in the protein	red 
+	-	There are no PTMs reported in Uniprot for the peptide	green
+mergerow{2}PTM evidences	non-experimental evidence	Predicted PTM (Uniprot Database)	mergerow{2}green if none, red otherwise
+	experimental evidence	Evidence of experimental PTMs (Uniprot Database)	
+Methionines	number	The number of methionine residues in the peptide sequence	green if zero or red if greater than zero
+missing cleavages	number	The number of missed enzymatic cleavages	green if zero or red if greater than zero
+first aa	amino acid	The amino acid in the first position of the peptide sequence. Basic AAs and dibasic AAs (D, E, K, R) or proline (P) in this position indicate a probable missed enzymatic cleavage	red if D, E, K, R or P, green otherwise
+next aa	amino acid	The amino acid that follows the last amino acid of the peptide. Basic AAs and dibasic AAs (D, E, K, R) or proline in this position indicate a probable missed enzymatic cleavage	red if D, E, K, R or P, green otherwise

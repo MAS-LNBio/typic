@@ -1,0 +1,2 @@
+typic-data/HS-proteome-uniprot5640-2020-01-15.fasta Human Uniprot 2020-01-15
+typic-data/HS-proteome-uniprot5640-isoforms-2021-01-29.fasta Human Uniprot w. isoforms 2021-01-29
