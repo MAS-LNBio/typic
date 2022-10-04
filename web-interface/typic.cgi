@@ -3,7 +3,6 @@
 # This file is part of Typic version 6.
 # 2022 Guilherme P. Telles.
 
-use strict;
 
 use CGI qw(:standard -no_xhtml);
 use CGI::Carp 'fatalsToBrowser';
