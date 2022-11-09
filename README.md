@@ -9,3 +9,5 @@ Typic is written in Perl as the command line application typic.pl.
 The Tk graphical interface (typic-tk.pl, tkexcmd.pm, tkexwin.pm) and
 the cgi web interface (typic.cgi, typic-daemon, typic-dwn.cgi) both
 dispatch typic.pl.
+
+Usage manual: <a href="docs/typic-manual.txt">typic-manual.txt<\a>
