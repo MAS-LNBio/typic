@@ -11,3 +11,5 @@ the cgi web interface (typic.cgi, typic-daemon, typic-dwn.cgi) both
 dispatch typic.pl.
 
 Usage manual: <a href="https://github.com/MAS-LNBio/typic/blob/master/doc/typic-manual.txt">doc/typic-manual.txt</a>
+
+Web server: <a href="https://bug.ic.unicamp.br/mas/typic.cgi">bug@ic.unicamp</a>
