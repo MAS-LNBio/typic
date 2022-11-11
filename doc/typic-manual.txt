@@ -8,9 +8,10 @@ I. Overview
 
 Typic is a program that collects data from multiple sources and
 produces a ranking of the peptides of a protein to support the
-selection of proteotypic peptides.  Proteotypic peptides uniquely
-identify a protein and are consistently identified when a sample with
-a protein mixture is analyzed in an LC/MS experiment.
+selection of proteotypic peptides.  Proteotypic peptides are those
+peptides that uniquely identify a protein and are consistently
+identified when a sample with a protein mixture is analyzed in an
+LC/MS experiment.
 
 This implementation of Typic is written in Perl as a command line
 application (typic.pl).  A Tk graphical interface (typic-tk.pl), and a
@@ -27,8 +28,7 @@ include peptides from three sources:
 
 - peptides enlisted in an SRM Atlas build.
 
-- peptides resulting from digestion by Trypsin, cutting the protein
-  sequence at every K or R not followed by P.
+- peptides resulting from in-silico enzymatic digestion.
 
 
 
@@ -44,15 +44,15 @@ installed along with Perl (the first group is often not installed
 while the last group of packages is typically installed by default.)
 
 File::Touch
-Chart::Clicker::Renderer::Point
 Chart::Clicker
+Statistics::Regression
+Chart::Clicker::Renderer::Point
 Excel::Writer::XLSX
 LWP::Simple
 LWP::UserAgent
-Statistics::Regression
 XML::LibXML
-File::HomeDir
 Tk
+File::HomeDir
 
 IO::Handle
 File::Basename
@@ -64,8 +64,8 @@ Time::HiRes
 3) Copy the files in folder "programs" in the repository into a folder
 in your computer.
 
-4) Add the folder where you copied Typic files to the PATH environment
-variable.
+4) Add the complete name of the folder where you copied Typic files to
+the PATH environment variable.
 
 
 After installation of those packages, from a terminal and after
@@ -77,13 +77,21 @@ typic.pl
 will execute Typic.  The output of the program with no arguments will
 be a textual briefing on its usage.
 
+If a package is missing, a message like this will be shown:
+
+Can't locate Statistics/Regression.pm in @INC (you may need to install
+the Statistics::Regression module) (@INC contains:
+C:/Strawberry/perl/site/lib C:/Strawberry/perl/vendor/lib
+C:/Strawberry/perl/lib) at typic.pl line 35.
+BEGIN failed--compilation aborted at typic.pl line 35.
+
 
 Issuing the command
 
 typic-tk.pl
 
 will open the graphical interface to Typic.  It is also possible to
-start the graphical interface straight from a file explorer by using
+start the graphical interface directly from a file explorer by using
 the graphical interface of your operating system.
 
 After installation, it should be straightforward to run Typic on the
@@ -96,19 +104,46 @@ SRM Atlas build in csv format.
 -A note for Windows users
 
 For Windows a good choice is Strawberry Perl (strawberryperl.com)
-that installs easily or may used in portable mode.
+that installs easily or may used in portable mode.  
 
 After installing, it is possible to start the program "CPAN Client" to
 install the necessary packages.
 
 CPAN Client will display a prompt with the form
 
-CPAN> 
+cpan> 
 
 at which the command install may be used to install the packages,
 for instance
 
 cpan> install File:Touch
+
+My experiments wit Strawberry Perl required installing only the
+following packages, as the other were already installed or were
+installed automatically with these three:
+
+File::Touch
+Chart::Clicker
+Statistics::Regression
+
+As a piece of bad news, in Windows the package instalation may be
+annoyingly slow.
+
+Regarding Step (4), add the complete name of the folder where you
+copied Typic files to the PATH environment variable:
+
+-In Windows the complete name of a folder starts with a letter like
+for instance
+
+C:\Users\gpt\proteotypic\dataset1
+
+and may be easily selected (for copy-and-paste) by clicking on the
+address bar in File explorer.
+
+The webpage 
+https://www.computerhope.com/issues/ch000549.htm
+has a great step-by-step procedure for adding the name of Typic folder
+in your instalation to the PATH environment variable.
 
 
 
@@ -127,21 +162,19 @@ Additional Data on each protein will be downloaded from UniProt and from
 ProteinAtlas on demand.
 
 
-
 -Agnostic input
 
 Agnostic input of LC/MS data is a TSV file.  
 
-The agnostic file (TSV format) must contain four columns with headers:
+The agnostic file (TSV format) must contain at least four columns with
+headers:
 
 Protein accession
 Peptide sequence
-Quantitative information
 Retention time
+Quantitative information
 
-The file may contain other columns as well.  These other columns may
-appear inbetween the columns listed above, but their relative order
-must be the same as shown above.
+The columns must appear in the order above.
 
 Each entry in column 'Protein accession' is expected to have one or
 more UniProt accession numbers separated by a comma.
@@ -150,6 +183,22 @@ If a peptide occurs more than once for the same protein, the value of
 'Quantitative information' for the peptide will be the average of the
 respective occurrences and the value of 'Retention time' will be the
 median of the respective occurrences.
+
+Optionally, the file may contain data on quantitative information per
+sample.  In this case, one colum per sample must appear after the
+column "Quantitative information".  Their headers should be the sample
+names.
+
+When quantitative information per sample is given as input, a groups
+file may also be given as input.  The groups file (TSV format) must
+contain two columns with headers:
+
+Sample 
+Group
+
+indicating the group to which each sample belongs.  Sample names are
+expected to match the headers of the columns following the column
+"Quantitative information" in the agnostic file.
 
 
 
@@ -282,9 +331,9 @@ metadata.
 
 
 ----------------------------------------------------------------------
-V. Example executions
+V. Example data
 
--Example with DDA data in MaxQuant format
+-DDA data in MaxQuant format
 
 The zip file "input.zip" in the folder "example-maxquant" in the
 repository may be used to test Typic with MaxQuant data.
@@ -300,7 +349,7 @@ and change to the folder where the example files are.
 
 Executing the command
 
-typic.pl -v eco.obo -i ids.txt -p peptides.txt -e evidence.txt -g groups.txt -f HS-UniProt-201705.fasta -s HS-SRMAtlas-201604.csv -r irts-pierce.csv -d -a
+typic.pl -v eco.obo -i ids.txt -p peptides.txt -e evidence.txt -g groups.txt -f HS-UniProt-201705.fasta -s HS-SRMAtlas-201604.csv -r irts-pierce.csv -d -a 526
 
 will execute Typic on the example data.
 
@@ -311,7 +360,7 @@ The output for these data is also in the folder "results" in the
 repository.
 
 
--Example with DDA data in agnostic format
+-DDA data in agnostic format
 
 The zip file "input.zip" in the folder "example-agnostic" in the
 repository may be used to test Typic with fictional agnostic data.
@@ -327,9 +376,37 @@ and change to the folder where the example files are.
 
 Executing the command
 
-typic.pl -v eco.obo -i ids.txt -t agn-data.csv -f HS-UniProt-201705.fasta -s HS-SRMAtlas-201604.csv -r irts-pierce.csv -d -a
+typic.pl -v eco.obo -i ids.txt -t data.csv -f HS-UniProt-201705.fasta -s HS-SRMAtlas-201604.csv -r irts-pierce.csv -d -a 526
 
 will execute Typic on the example data.
+
+The output will be in the same folder with the input data, unless a
+different folder has been selected.
+
+The output for these data is also in the folder "results" in the
+repository.
+
+
+-DDA data in agnostic format with quantitative information per sample
+
+The zip file "input.zip" in the folder "example-agnostic-with-samples"
+in the repository may be used to test Typic with fictional agnostic data
+that includes quantitative information for each sample in the experiment.
+
+Download the files to a folder in your computer.  Open the graphical
+interface of Typic and fill the fields with appropriate files in the
+Agnostic tab.  In the Output tab, click on the Run button and wait for
+the program to finish displaying data in the execution window that
+will open.
+
+It is also possible to run the example on a terminal.  Open a terminal
+and change to the folder where the example files are.
+
+Executing the command
+
+typic.pl -v eco.obo -i ids.txt -t data.csv -g groups.csv -f HS-UniProt-201705.fasta -s HS-SRMAtlas-201604.csv -r irts-pierce.csv -d -a 526
+
+will execute Typic on that example data.
 
 The output will be in the same folder with the input data, unless a
 different folder has been selected.
@@ -351,14 +428,14 @@ identifiers of proteins and an Evidence Ontology file.
 
 Mandatory arguments:
 
--i
+-i file
 A text file with UniProt protein accession numbers or protein names
 separated by any number of blanks (spaces, tabs, newlines).
 
 If the hash symbol (#) appears anywhere in a line, the contents of
 that line is ignored from the hash up to the end of the line.
 
--v
+-v file
 An Evidence Ontology file in OBO format. 
 https://evidenceontology.org
 
@@ -366,31 +443,47 @@ https://evidenceontology.org
 
 Options for LC/MS data in MaxQuant format:
 
--p
+-p file
 A MaxQuant peptides file in TSV format.
 
--e
+-e file
 A MaxQuant evidence file in TSV format. Must be used with -p. 
 
--g
+-g file
 A TSV file with experimental groups.
 
 
 
 Option for LC/MS data in agnostic format:
 
--t
+-t file
 An agnostic input file in TSV format. 
+
+-g file
+A TSV file with experimental groups.
+
 
 
 Options for other sources of peptides:
 
 -d
-Digest each protein in silico (trypsin, no misses) and include the
-resulting peptides.  If no LC/MS data nor an SRM Atlas build are
+Digest each protein in-silico with no misses and include the
+resulting peptides.  If no LC/MS data nor an SRM Atlas build is
 provided, digest is implied.
 
--s
+-z enzyme
+Select the enzyme among:
+argc           split at the C-terminus of every R
+chymotrypsin   split at the C-terminus of every F, L, W or Y
+gluc_de        split at the C-terminus of every D or E
+gluc_e         split at the C-terminus of every E
+lysc           split at the C-terminus of every K
+trypsin        split at the C-terminus of every K or R not followed by a P
+trypsin_kr     split at the C-terminus of every K or R
+
+The default is trypsin.
+
+-s file
 Include the peptides of a protein enlisted in SRM Atlas file in TSV format. 
 http://www.srmatlas.org
 
@@ -398,28 +491,30 @@ http://www.srmatlas.org
 
 Options for other sources of data:
 
--f
+-f file
 A proteome file in fasta format. 
 
--c
+-c file
 A contaminants file in fasta format. 
 
--r
+-r file
 Experimental retention times for iRT peptides in a TSV file.  
 
--a
-Download and include data from PeptideAtlas.
+-a build
+Download and include data from a PeptideAtlas build.  The "build"
+identifier is typically a number.
 http://www.peptideatlas.org
+Downloading data from PeptideAtlas is usually slow.
 
 
 
 Output options:
 
--o
+-o directory
 A directory where the spreadsheets produced by Typic will be
 written. If not provided, write to the current working directory.
 
--w
+-w directory
 A directory where UniProt and PeptideAtlas files will be read from, if
 present, or saved to after downloading. If not provided, Typic will
 write data to the current working directory and delete the downloaded
@@ -432,15 +527,20 @@ and currently stored in the directory set by -w.
 -n
 Do not generate quantitative plots nor RT plots.
 
--l
+-l start,end
 The interval of lengths of peptides included in the output.
 The default is [7,25]: -l 7,25
-A right-open interval may be specified, for instance -l 7, 
+A right-open interval may be specified, for instance -l 7, to include
+peptides with 7 or more aminoacids or -l 1, to include all peptides.
 
--k
+
+-k hex,hex,hex
 A triplet of RGB hexadecimal values for ranking colors separated by
-a comma.  The default is green, yellow, red: -k 20E020,EEF71B,E02020.
-      
+a comma.
+The default is green, yellow, red: -k 20E020,EEF71B,E02020
+For high contrast green, yellow, red: -k 20E020,EEF71B,E02020
+For blue, magenta, yellow: -k 648FFF,DC267F,FFB000
+
 -q
 Refrain from printing progress messages.
 
@@ -462,7 +562,7 @@ user will be "in the dark" until the program has finished.
 
 PeptideAtlas does not seem to have a programatic access, and
 downloading from a url requires knowing the build version.  The
-build version has been hard-coded into a variable in typic.pl.
+build version has to be given through -a to typic.pl.
 
 ----------------------------------------------------------------------
 This is the end of typic-manual.txt
