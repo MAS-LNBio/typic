@@ -12,4 +12,4 @@ dispatch typic.pl.
 
 Usage manual: <a href="https://github.com/MAS-LNBio/typic/blob/master/doc/typic-manual.txt">doc/typic-manual.txt</a>
 
-Web server: <a href="https://bug.ic.unicamp.br/mas/typic.cgi">bug@ic.unicamp</a>
+Web server: <a href="https://bug.ic.unicamp.br/mas/typic.cgi">bug at ic.unicamp</a>
