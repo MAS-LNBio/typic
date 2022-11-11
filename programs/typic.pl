@@ -40,8 +40,6 @@ Getopt::Long::Configure('bundling');
 $| = 1;
 $" = ', ';
 
-$PAtlasBuild = '526';
-
 $idsf = '';
 $ecof = '';
 
@@ -50,12 +48,13 @@ $peptidesf = '';
 $evidencef = '';
 $groupsf = '';
 
-$digest = 0;
 $srmf = '';
+$digest = 0;
+$enzyme = 'trypsin';
 
 $proteomef = '';
 $contf = '';
-$patlas = 0;
+$patlas = '';
 $irtf = '';
 
 $outd = '';
@@ -64,7 +63,7 @@ $datad = '';
 $update = 0;
 $nofigures = 0;
 $peplen = '7,25';
-$colors = '20E020,EEF71B,E02020';
+$colors = '2AAF0F,DED837,DE3737';
 $verb = 0;
 $help = 0;
 
@@ -78,12 +77,13 @@ $st = GetOptions('i=s' => \$idsf,
 		 'e=s' => \$evidencef,
 		 'g=s' => \$groupsf,
 		 't=s' => \$agnosticf,
-		 'd' => \$digest,
 		 's=s' => \$srmf,
+		 'd' => \$digest,
+		 'z=s' => \$enzyme,
 		 'f=s' => \$proteomef,
 		 'c=s' => \$contf,		 
 		 'r=s' => \$irtf,
-		 'a' => \$patlas,
+		 'a=s' => \$patlas,
 		 'o=s' => \$outd,
 		 'w=s' => \$datad,
 		 'u' => \$update,
@@ -109,20 +109,25 @@ Usage: typic.pl -i file -v file [options]
 options for data on samples in MaxQuant format:
  -p   A MaxQuant peptides file.
  -e   A MaxQuant evidence file. Must be used with -p. 
- -g   A file with experimental groups.
+ -g   A tsv file with experimental groups.
 
 options for data on samples in agnostic format:
  -t   An agnostic input file. 
+ -g   A tsv file with experimental groups.
 
 options for other sources of peptides:
- -d   Include peptides from in-silico digestion (trypsin, no misses).
  -s   Include peptides from an SRM Atlas build file. 
+ -d   Include peptides from in-silico digestion (no misses).
+ -z   Select digestion enzyme: trypsin ((K or R) not P), argc (R), 
+      chymotrypsin (F, L, W or Y), gluc_de (D or E), gluc_e (E), lysc (K),
+      trypsin_kr (K or R).
+      The default is: -z trypsin
 
 options for other sources of data:
  -f   A proteome file in fasta format. 
  -c   A contaminants file in fasta format. 
- -r   Retention times for iRT peptides.
- -a   Add data from PeptideAtlas.
+ -r   A tsv file with retention times for iRT peptides.
+ -a   Add data from a PeptideAtlas build.
 
 output options:
  -o   The output directory. Defaults to the current working directory.
@@ -135,10 +140,10 @@ output options:
  -l   The interval of lengths of peptides included in the output.
       The default is [7,25]: -l 7,25
  -k   A triplet of RGB hexadecimal values for ranking colors.  
-      The default is green, yellow, red: -k 20E020,EEF71B,E02020
+      The default is green, yellow, red: -k 2AAF0F,DED837,DE3737 
  -q   Refrain from printing progress messages.
 
- -h   This help.
+ -h   This usage reminder.
 _END_
 
   exit(2);
@@ -163,10 +168,13 @@ for $c (@colors) {
 (!$minlen || $minlen <= 0 || $minlen > $maxlen) and
   abend('The length interval is invalid');
 
-(!$peptidesf && $evidencef ||
- !$peptidesf && $groupsf) and abend('Maxquant input selection is incorrect.');
-
 ($peptidesf && $agnosticf) and abend('Maxquant and agnostic input are exclusive.');
+
+(!$peptidesf && $evidencef) and
+  abend('Maxquant evidence file must be given with a peptides file.');
+
+($groupsf && !$peptidesf && !$agnosticf) and
+  abend('Groups file must be given with MaxQuant or agnostic input.');
 
 if ($outd) {
   (!-d $outd) and abend("The output directory $outd doesn't exist.");
@@ -190,8 +198,13 @@ else {
 $outd =~ s/\/$//;
 $datad =~ s/\/$//;
 
-$verb = !$verb;
+%enzyme =  ('argc' => ['R',''], 'chymotrypsin' => ['FLWY',''],
+	    'gluc_de' => ['DE',''], 'gluc_e' => ['E',''],
+	    'lysc' => ['K',''], 'trypsin' => ['KR','P'], 'trypsin_kr' => ['KR','']);
 
+(!exists($enzyme{$enzyme})) and abend("Invalid digestion enzyme.");
+
+$verb = !$verb;
 
 ### Load protein ids:
 @prots = read_words($idsf);
@@ -218,88 +231,138 @@ if ($proteomef) {
 }
 
 
-### Load data on peptides in samples:
-# %sample is a hash protein-id => array.
-# The array has data on the peptides of the protein, sequentially.
-# For instance, the agnostic format will have triplets with peptide,intensity,RT
+### Load quantitative data in %sample, a hash protein-id => array.
+# The array has data items on the peptides of the protein, sequentially.
+# The number of data items for each peptide will differ among
+# agnostic, agnostic with samples and MaxQuant.
+# For instance, for data in the agnostic format the array will have
+# three data items for each peptide:
 # Q9UBG3 => CVTEGQGDR,633550,1484.75,EFLVLVFK,2183060,6111.48,TEGNCTALTR,889058,2010.51
-
+# The number of data items of each peptide will be $samplew.
 %sample = (); 
+$samplew = 0;
+
+# The name and number of samples:
+@smpids = ();
 $nsmps = 0;
 
-%rts = ();    # A hash peptide-sequence => array with retention times and MS count.
+# A hash peptide => array with RT and MS count, for MQ with evidence only:
+%rts = ();
+
+# The regression coeficients:
 @smp_theta = ();
 
 
-### Load data on peptides in samples in agnostic format:
-# Protein accession | Peptide sequence | Intensity | Retention time
+### Load data from a file in agnostic format without quantitativa data per sample:
+#
+# Protein accession | Peptide sequence | Retention time | Quantitative Information 
 # id,id,...,id | string | number | number
+#
+# or in agnostic format with quantitativa data per sample, that has one or more
+# columns after "Quantitative Information" whose headers are the sample names.
 
 if ($agnosticf) {
-  %in = csv_read_columns($agnosticf,'\t','"',
-			 'Protein accession',
-			 'Peptide sequence','Quantitative information','Retention time');
+  @smpids = csv_read_row($agnosticf,"\t",'"',0);
 
-  # Add every protein in 'Protein' as a key in %sample:
-  foreach $accs (keys(%in)) {
-    foreach $acc (split(/\s*,\s*/,$accs)) {
-      $acc = uc($acc);
-      push(@{$sample{$acc}}, @{$in{$accs}});
+  if (@smpids == 4) {
+    %in = csv_read_columns($agnosticf,'\t','"',
+			   'Protein accession',
+			   'Peptide sequence','Retention time','Quantitative information');
+    $samplew = 3;
+
+    # Add every id in 'Protein accession' as a key in %sample:
+    foreach $accs (keys(%in)) {
+      foreach $acc (split(/\s*,\s*/,$accs)) {
+	$acc = uc($acc);
+	push(@{$sample{$acc}}, @{$in{$accs}});
+      }
+    }
+
+    # Evaluate regression on sample RTs:
+    $r = Statistics::Regression->new("sample",["intercept","slope"]);
+  
+    foreach $acc (keys(%sample)) {
+      @dat = @{$sample{$acc}};
+      for ($j=0; $j<@dat; $j+=3) {
+	$rt = $dat[$j+1];
+	$hi = hydrophobicity_index($dat[$j]);
+	$r->include($rt,[1.0,$hi]);
+      }
+    }
+    
+    if ($r->n() > 5) {
+      #$r->print();
+      @smp_theta = $r->theta();
+    }
+  }
+  else {
+    for ($i=0; $i<4; $i++) {
+      shift(@smpids);
+    }
+    
+    $nsmps = @smpids;
+    $samplew = 3+$nsmps;
+
+    %in = csv_read_columns($agnosticf,"\t",'"',
+			   'Protein accession',
+			   'Peptide sequence','Retention time','Quantitative information',@smpids);
+
+    # Add every id in 'Protein accession' as a key in %sample:
+    foreach $accs (keys(%in)) {
+      foreach $acc (split(/\s*,\s*/,$accs)) {
+	$acc = uc($acc);
+	push(@{$sample{$acc}}, @{$in{$accs}});
+      }
+    }
+
+    # Evaluate regression on sample RTs:
+    $r = Statistics::Regression->new("sample",["intercept","slope"]);
+  
+    foreach $acc (keys(%sample)) {
+      @dat = @{$sample{$acc}};
+      for ($j=0; $j<@dat; $j+=3+@smpids) {
+	$rt = $dat[$j+1];
+	$hi = hydrophobicity_index($dat[$j]);
+	$r->include($rt,[1.0,$hi]);
+      }
+    }
+
+    if ($r->n() > 5) {
+      #$r->print();
+      @smp_theta = $r->theta();
     }
   }
 
-  # Evaluate regression on sample RTs:
-  $r = Statistics::Regression->new("sample",["intercept","slope"]);
-  
-  foreach $acc (keys(%sample)) {
-    @dat = @{$sample{$acc}};
-    for ($j=0; $j<@dat; $j+=3) {
-      $rt = $dat[$j+2];
-      $hi = hydrophobicity_index($dat[$j]);
-      $r->include($rt,[1.0,$hi]);
-    }
-  }
-
-  if ($r->n() > 5) {
-    #$r->print();
-    @smp_theta = $r->theta();
-  }
-  
   $verb and print 'Agnostic file refers to ', scalar keys %sample, " proteins.\n"; 
 }
 
 
-### Load data from MaxQuant:
+### Load data from MaxQuant files:
 elsif ($peptidesf) {
 
-  # From peptides, for each protein get multiple rows having
-  # peptide, unique in group, unique in proteins, intensity and the columns
-  # between Intensity and Reverse (having sample intensities):
+  # Get the headers of columns having sample intensities, those
+  # between Intensity and Reverse:
   @cols = csv_read_row($peptidesf,"\t",'"',0);
-  @H = ();
+  @smpids = ();
+  @icols = ();
 
   for ($i=0; $cols[$i] ne 'Intensity'; $i++) {
     ;
   }
   for ($i++; $cols[$i] ne 'Reverse'; $i++) { 
-    push(@H,$cols[$i]); 
+    push(@smpids,(split(/ /,$cols[$i],2))[1]);
+    push(@icols,$cols[$i]);
   }
-
-  @smpids = ();
-  for $id (@H) {
-    push(@smpids,(split(/ /,$id,2))[1]);
-  }
+  
   $nsmps = @smpids;
 
-  # Load from peptides:
   %sample = csv_read_columns($peptidesf,"\t",'"',
 			     'Leading razor protein',
-			     'Sequence','Unique (Groups)','Unique (Proteins)',
-			     'Intensity',@H);
-  $samplew = 4+@H;
+			     'Sequence','Unique (Groups)','Unique (Proteins)','Intensity',@icols);
+  $samplew = 4+$nsmps;
 
+  # From evidence file, for each peptide get retention time and MS/MS count:
   if ($evidencef) {
-    # From evidence, for each peptide get a row with retention time and MS/MS count:
     %rts = csv_read_columns($evidencef,"\t",'"',
 			    'Sequence',
 			    'Retention time','MS/MS count');
@@ -325,32 +388,35 @@ elsif ($peptidesf) {
   }
 
   $verb and print 'MaxQuant files refers to ', scalar keys %sample, " proteins.\n"; 
+}
 
-  # Load groups:
-  if ($groupsf) {
-    %aux = read_keys_values($groupsf,'\t',1);
 
-    # If there are excess sample ids in %aux, drop them.  If there
-    # are missing ones, abort.
-    %groups = ();
-    @abend = ();
+
+### Load groups file:
+if ($groupsf) {
+  %aux = read_keys_values($groupsf,'\t',1);
+
+  # If there are excess sample ids in %aux, drop them.  If there are missing ones, abort.
+  %groups = ();
+  @abend = ();
     
-    for $id (@smpids) {
-      if (exists($aux{$id})) {
-	$groups{$id} = $aux{$id};
-      }
-      else {
-	push(@abend,$id);
-      }
+  for $id (@smpids) {
+    if (exists($aux{$id})) {
+      $groups{$id} = $aux{$id};
     }
-    if (@abend) {
-      abend("Group" . (@abend>1?'s':'') . " @abend " . (@abend>1?'are':'is') . " not in $groupsf.");
+    else {
+      push(@abend,$id);
     }
+  }
+  if (@abend) {
+    abend("Group" . (@abend>1?'s':'') . " @abend " . (@abend>1?'are':'is') . " not in $groupsf.");
   }
 }
 
 
-### Load data from SRM-Atlas into a hash ACC => array-of-peptides:
+### Load data from SRM-Atlas file into a hash ACC => array-of-peptide-sequences:
+%srm = ();
+
 if ($srmf) {
   %srm = csv_read_columns($srmf,"\t",'"','Prot_acc','sequence');
   
@@ -384,23 +450,21 @@ if ($srmf) {
   
   $verb and print 'SRM Atlas file has ', scalar keys %srm, " proteins.\n"; 
 }
-else {
-  %srm = ();
-}
 
 
-### Load contaminants:
+### Load a fasta file with contaminants into an AoH:
+@cont = ();
+
 if ($contf) {
   @cont = ff_load($contf,0,0,\&genbank_tag);
   $verb and print 'Contaminants file has ', scalar @cont, " sequences.\n"; 
 }
-else {
-  @cont = ();
-}
 
 
-### Load iRT experimental retention times and evaluate regression coefficients:
+### Load a file with iRT experimental retention times and evaluate
+### regression coefficients:
 @irt_theta = ();
+
 if ($irtf) {
   %irts = read_keys_values($irtf,'\t',1);
 
@@ -415,11 +479,10 @@ if ($irtf) {
 }
 
 ### For each protein, download UniProt entry, add peptides from
-### agnostic or MQ data structures, from SRM Atlas and from digestion
-### and load uniprot features.
-### For each of its peptides, determine location in gene, uniqueness,
-### its uniprot features, and hydro index etc.  Then write data to an
-### xlsx.
+### quantitative data, from SRM Atlas and from digestion
+### and load uniprot features.  For each of its peptides, determine
+### location in gene, uniqueness, its uniprot features, and hydro
+### index etc.  Then write data to an xlsx.
 
 $int_plots_height = 0;
 
@@ -433,8 +496,8 @@ foreach $prot (@prots) {
   $unifaka = "$datad/$prot-aka.xml";
   $failf = "$datad/$prot-fail.xml";
   
-  ### Download non-existing or outdated UniProt xml or use local files.
-  ### On fail skit this prot:
+  ### Download UniProt xml or use local files.
+  ### On fail skip this prot:
   if ((!-f $unif && !-f $unifaka) || $update) {
 
     (-f $unif) && unlink($unif);
@@ -478,40 +541,62 @@ foreach $prot (@prots) {
   }      
 
   
-  ### Data from samples will be gathered in a HoH indexed by 
-  ### peptide sequence with peptide's attributes in an inner hash:
+  ### Data on the protein will be gathered in a HoH that maps each
+  ### peptide sequence to its attributes in an inner hash:
   %H = ();
 
-  # The number of peps in prot that came from a sample:
+  # The number of peps in the protein that came from a sample:
   $npepsmp = 0; 
 
-  # The peptides with intensity and their intensities, for quartile evaluation:
-  @Q = ();
+  # The peptides that have intensity and their intensities, for quartile evaluation:
+  @P = ();
   @I = ();
 
-  ### Add peptides from samples in agnostic format:
+  ### Add peptides from samples given in agnostic format:
   if ($agnosticf && %sample && exists($sample{$prot})) {
+
+    # An empty HoHoL for intensity values of each peptide x sample:
+    %intseries = ();
+    
+    %peps = ();
+    for ($i=0; $i<@{$sample{$prot}}; $i+=$samplew) {
+      $pep = uc($sample{$prot}[$i]);
+      (!$allpeps && (length($pep) < $minlen || length($pep) > $maxlen)) and next;
+      $peps{$pep} = 1;
+    }
+    @peps = keys(%peps);
+
+    if (!$nofigures && $samplew > 3) {
+      foreach $pep (@peps) {
+	$intseries{$pep} = { () };
+	for ($j=0; $j<@smpids; $j++) {
+	  $intseries{$pep}{$smpids[$j]} = [ () ];
+	}
+      }
+    }
+
+    # Collect intensities and RT in %sample.
     # If a peptide occurs more than once for a protein, the peptide
     # intensity will be the average and the retention time will be the median.  
     # Out-of-range intensities will be set to 0. Out-of-range RTs will be discarded.
-
-    # %sample is processed twice. Peptides are add to @peps for the second round.
-    @peps = ();
-
-    for ($i=0; $i<@{$sample{$prot}}; $i+=3) {
+    for ($i=0; $i<@{$sample{$prot}}; $i+=$samplew) {
       $pep = uc(@{$sample{$prot}}[$i]);
 
       (!$allpeps && (length($pep) < $minlen || length($pep) > $maxlen)) and next;
-      
-      $int = @{$sample{$prot}}[$i+1];
-      $rt = @{$sample{$prot}}[$i+2];
 
-      looks_like_number($int) or ($int = 0);
+      $rt = @{$sample{$prot}}[$i+1];
+      $int = @{$sample{$prot}}[$i+2];
+
+      if (!$nofigures && $samplew > 3) {
+	for ($j=3; $j<$samplew; $j++) {
+	  push(@{$intseries{$pep}{$smpids[$j-3]}},$sample{$prot}[$i+$j]);
+	}
+      }
 
       if (exists($H{$pep})) {
 	($int < 0) and ($int = 0);
 	push(@{$H{$pep}{int}},$int);
-	looks_like_number($rt) and push(@{$H{$pep}{rt}},$rt);
+	push(@{$H{$pep}{rt}},$rt);
       }
       else {
 	%h = ();
@@ -519,14 +604,9 @@ foreach $prot (@prots) {
 	$h{src} = 'sample';
 	$h{sco} = 0;
 	$h{nzi} = '-';
-	$h{int} = [ () ];
-	$h{rt} = [ () ];
-
-	push(@{$h{int}},$int);	
-	looks_like_number($rt) and push(@{$h{rt}},$rt);
-	
+	$h{int} = [ ($int) ];
+	$h{rt} = [ ($rt) ];
 	$H{$pep} = { %h };
-	push(@peps,$pep);
       }
     }
 
@@ -541,13 +621,28 @@ foreach $prot (@prots) {
       
       ($int,$_) = avg_var(\@{$H{$pep}{int}});
       $H{$pep}{int} = $int;
-      push(@Q,$pep);
+      push(@P,$pep);
       push(@I,$int);
     }
-  }
 
+    if (!$nofigures && $samplew > 3) {
+      foreach $pep (@peps) {
+	for ($j=0; $j<@smpids; $j++) {
+	  ($int,$_) = avg_var(\@{$intseries{$pep}{$smpids[$j]}});
+	  $intseries{$pep}{$smpids[$j]} = $int;
+	}
+      }
+
+      if ($groupsf) {
+	$int_plots_height = intensity_plots($protaka?$protaka:$prot,\%intseries,\%groups,$outd);
+      }
+      else {
+	$int_plots_height = intensity_plots($protaka?$protaka:$prot,\%intseries,undef,$outd);
+      }
+    }
+  }
   
-  ### Add peptides from samples im MaxQuant format:
+  ### Add peptides from samples given in MaxQuant format:
   elsif ($peptidesf && %sample && exists($sample{$prot})) {
    
     @peps = ();
@@ -557,17 +652,18 @@ foreach $prot (@prots) {
       push(@peps,$pep);
     }
 
-    # The intensity of each peptide across samples will be
-    # recorded into a HoH that will be used to plot them:
+    # The intensity of each peptide across samples will be recorded
+    # into a HoH that will be used to plot them:
     %intseries = ();
 
-    foreach $pep (@peps) {
-      $intseries{$pep} = { () };
-      for ($j=0; $j<@smpids; $j++) {
-	$intseries{$pep}{$smpids[$j]} = 0;
+    if (!$nofigures) {
+      foreach $pep (@peps) {
+	$intseries{$pep} = { () };
+	for ($j=0; $j<@smpids; $j++) {
+	  $intseries{$pep}{$smpids[$j]} = 0;
+	}
       }
     }
-
     
     for ($i=0; $i<@{$sample{$prot}}; $i+=$samplew) {
       %h = ();
@@ -578,17 +674,34 @@ foreach $prot (@prots) {
       $h{mqunqpro} = @{$sample{$prot}}[$i+2];
       $h{int} = @{$sample{$prot}}[$i+3];
       ($h{int} < 0) and ($h{int} = 0);
-      push(@Q,$pep);
+      push(@P,$pep);
       push(@I,$h{int});
 
-      $h{nzi} = 0;
-      for ($j=4; $j<$samplew; $j++) {
-	if ($sample{$prot}[$i+$j] != 0) {
-	  $h{nzi}++;
-	  $intseries{$pep}{$smpids[$j-4]} = $sample{$prot}[$i+$j];
+      if (!$nofigures) {
+	$h{nzi} = 0;
+	for ($j=4; $j<$samplew; $j++) {
+	  if ($sample{$prot}[$i+$j] != 0) {
+	    $h{nzi}++;
+	    $intseries{$pep}{$smpids[$j-4]} = $sample{$prot}[$i+$j];
+	  }
+	}
+
+	if ($groupsf) {
+	  $int_plots_height = intensity_plots($protaka?$protaka:$prot,\%intseries,\%groups,$outd);
+	}
+	else {
+	  $int_plots_height = intensity_plots($protaka?$protaka:$prot,\%intseries,undef,$outd);
 	}
       }
-           
+      else {
+	$h{nzi} = 0;
+	for ($j=4; $j<$samplew; $j++) {
+	  if ($sample{$prot}[$i+$j] != 0) {
+	    $h{nzi}++;
+	  }
+	}
+      }
+	
       # RT and MS-count:
       if (exists($rts{$pep})) {
 	@aux = ();
@@ -613,22 +726,14 @@ foreach $prot (@prots) {
       $npepsmp++;
       $H{$pep} = { %h };
     }
-
-    if (!$nofigures) {
-      if ($groupsf) {
-	$int_plots_height = intensity_plots($protaka?$protaka:$prot,\%intseries,\%groups,$outd);
-      }
-      else {
-	$int_plots_height = intensity_plots($protaka?$protaka:$prot,\%intseries,undef,$outd);
-      }
-    }
   }
 
   if (@I) {
     @index = sort { $I[$a] <=> $I[$b] } 0..@I-1;
     @I = @I[@index];
-    @Q = @Q[@index];
+    @P = @P[@index];
   }
+
 
 
   ### Add peptides from SRM Atlas:
@@ -692,28 +797,28 @@ foreach $prot (@prots) {
   ### For such peps, also add coordinates:
   if ($digest) {
 
-    ($f,$p) = trypsin_digestion_basic($fasta);
-    @F = @{$f};
-    @P = @{$p};
+    ($f,$p) = digest($fasta,@{$enzyme{$enzyme}});
+    @frag = @{$f};
+    @pos = @{$p};
     
-    for ($i=0; $i<@F; $i+=1) {
-      $pep = uc($F[$i]);
+    for ($i=0; $i<@frag; $i+=1) {
+      $pep = uc($frag[$i]);
       (!$allpeps && (length($pep) < $minlen || length($pep) > $maxlen)) and next;
 
       if (!exists($H{$pep})) {
 	%h = ();
-	$h{src} = 'in-silico digestion';
+	$h{src} = "in-silico $enzyme digestion";
 	$h{int} = '-';
 	$h{nzi} = '-';
 	$h{rt} = '-';
-	$h{beg} = $P[$i] + 1;
-	$h{end} = $P[$i] + length($pep);
+	$h{beg} = $pos[$i] + 1;
+	$h{end} = $pos[$i] + length($pep);
 	$h{mat} = 'exact';
 	
 	$H{$pep} = { %h };
       }
       else {
-	if ($H{$pep}{src} eq 'in-silico digestion') {
+	if ($H{$pep}{src} eq "in-silico $enzyme digestion") {
 	  $H{$pep}{mat} = 'exact, multiple times';
 	}
       }
@@ -756,9 +861,9 @@ foreach $prot (@prots) {
     $H{$pep}{naa} = $H{$pep}{end} < length($fasta) ? substr($fasta,$H{$pep}{end},1) : '-';
 
     # Intensity quartile:
-    if ($H{$pep}{int} ne '-' && @Q) {
+    if ($H{$pep}{int} ne '-' && @P) {
       $i = 0;
-      while ($Q[$i] ne $pep) {
+      while ($P[$i] ne $pep) {
 	$i++;
       }
       
@@ -875,14 +980,19 @@ foreach $prot (@prots) {
     $H{$pep}{metpos} = $pos;
 
     # Missing cleavages:
-    $_= substr($pep,0,-1);
+    $at = $enzyme{$enzyme}[0];
+    $at =~ s/(?=.)(?<=.)/\|/g;
+    $after = $enzyme{$enzyme}[1];
+
     $occ = 0;
     $pos = '';
-    while (m/(K|R)/g) {
-      # if (substr($_,pos(),1) ne 'P') {
-      $pos .= "$1 at " . pos() . ', ';
-      $occ++;
-      # }
+    $_= $pep;
+    while (m/($at)/g) {
+      $p = pos();
+      if (index($after,substr($_,$p,1)) == -1) {
+	$pos .= "$1 at $p, ";
+	$occ++;
+      }
     }
 
     $H{$pep}{missocc} = $occ;
@@ -899,13 +1009,13 @@ foreach $prot (@prots) {
       $new = 0;
       $status = '';
       
-      ($verb) and print " $pep";
+      $verb and print " $pep";
       
       if (!-e $patlasf || $update) {
         $new = 1;
         sleep(1);
         $url = 'https://db.systemsbiology.net/sbeams/cgi/PeptideAtlas/GetPeptide?' .
-	  'atlas_build_id=' . $PAtlasBuild .
+	  'atlas_build_id=' . $patlas .
 	  '&searchWithinThis=Peptide+Sequence' .
 	  '&searchForThis=' . $pep . '&action=QUERY';
 	
@@ -1099,9 +1209,9 @@ foreach $prot (@prots) {
     $rank = '';
 
     $sht1->write($r,$c++,$protaka ? $protaka : $prot);
-    
-    if (!$nofigures && $peptidesf &&
-	((!$protaka && -f "$outd/$prot-$pep.png") || ($protaka && -f "$outd/$protaka-$pep.png"))) {
+   
+    if (!$nofigures && $samplew > 3 &&
+	((!$protaka && -f "$outd/$prot-$pep.png") || ($protaka && -f "$outd/$protaka-$pep.png"))) {      
       $figpos{$pep} = $p;
       $sht1->write_url($r,$c++,'internal:intensity-plots!A'.$p,undef,$pep);
       $p += int($int_plots_height / 20) + 2;
@@ -1287,8 +1397,7 @@ foreach $prot (@prots) {
     push(@W,'Occurrences in proteome sequences');
   }
   
-  push(@W,('PTMs','PTM evidences','Methionines','Missing cleavages',
-	   'First aa','Next aa'));
+  push(@W,('PTMs','PTM evidences','Methionines','Missing cleavages','First aa','Next aa'));
   ($patlas && ($peptidesf || $agnosticf || $srmf)) and
     push(@W,'Instruments reported in PeptideAtlas experiments (from sample or SRM Atlas)');
 
@@ -1409,7 +1518,7 @@ foreach $prot (@prots) {
   ### Figures:
   if (!$nofigures) {
 
-    if ($peptidesf) {
+    if ($samplew > 3) {
       $sh = $xx->add_worksheet('intensity-plots');
       foreach $pep (sort(keys(%figpos))) {
 	$file = $protaka ? "$outd/$protaka-$pep.png" : "$outd/$prot-$pep.png";
@@ -1417,7 +1526,7 @@ foreach $prot (@prots) {
       }
     }
 
-    if ($peptidesf || $irtf || @smp_theta || @irt_theta) {
+    if (@smp_theta || @irt_theta) {
 
       # Keep only the top 10 peptides in ranking:
       %aux = map { $_ => 1 } @peptides[0..9];
@@ -1471,8 +1580,15 @@ foreach $prot (@prots) {
     $sht = $xx->add_worksheet('ranking-glossary');
     include_tsv($sht,"$dirname/glossary-bas-ranking.csv",$plainf,$boldf);
   }
-    
 
+  $sht->write(30,0,"Color map",$boldf);
+  $sht->write(31,0,"Most favorable",$greenlf);
+  $sht->write(31,1,"default color: green");
+  $sht->write(32,0,"Kind of favorable/Neutral",$graylf);
+  $sht->write(32,1,"default color: yellow");
+  $sht->write(33,0,"Least favorable",$redlf);
+  $sht->write(33,1,"default color: red");
+    
   ### Metadata:
   $sh = $xx->add_worksheet('metadata');
 
@@ -1489,7 +1605,7 @@ foreach $prot (@prots) {
   }
   
   push(@W,scalar(@peptides).' peptides');
-
+  
   if ($peptidesf) {
     push(@W,"Peptides file: $peptidesf (" . (-s $peptidesf) . " bytes)"); 
     ($evidencef) and push(@W,"Evidence file: $evidencef (" . (-s $evidencef) . " bytes)");  
@@ -1508,19 +1624,13 @@ foreach $prot (@prots) {
     push(@W,"SRM Atlas file: $srmf (".scalar(keys %srm).' proteins)');
     ($nsrm == 0) and push(@W,"No SRM Atlas entry for $prot");
   }
-  
-  if ($proteomef) {
-    push(@W,"Proteome file: $proteomef (".scalar @pome.' sequences)');
-  }
-  
-  if ($contf) { 
-    push(@W,"Contaminants file: $contf (".scalar @cont.' sequences)'); 
-  }
 
-  if ($irtf) { 
-    push(@W,"iRTs file: $irtf"); 
-  }
-  
+  ($digest) and push(@W,"in-silico digestion with $enzyme");
+  ($proteomef) and push(@W,"Proteome file: $proteomef (".scalar @pome.' sequences)');
+  ($contf) and push(@W,"Contaminants file: $contf (".scalar @cont.' sequences)'); 
+  ($irtf) and  push(@W,"iRTs file: $irtf"); 
+  ($patlas) and  push(@W,"Data from PeptideAtlas build $patlas");
+
   $sh->write_col(0,0,\@W);
 
   $xx->close();
@@ -1883,29 +1993,29 @@ sub hydrophobicity_index {
 
 
 ################################################################################
-# (\@peptides,\@positions) trypsin_digestion_basic($sequence)
+# (\@peptides,\@positions) digest_trypsin($sequence,$at,$notfollowed)
 #
-# Split an aminoacid sequence by trypsin with no missing cleavages.
-# It returns a reference to an array of strings, one for each peptide,
-# and a reference for an array of positions where each peptide starts.
+# Split a sequence of aminoacids after (C-terminus) of any aminoacid in at
+# (string) that are not followed by and aminoacid in notfollowed (string).
 #
-# Split at: (K or R) not P.
+# Return a reference to an array of strings, one for each peptide,
+# and a reference to an array of the starting position of each peptide.
 
-sub trypsin_digestion_basic {
+sub digest {
 
-  my $t = shift;
-  $t = uc($t);
+  my $t = uc(shift);
+  my $at = shift;
+  my $after = shift;
 
   my @pos = (); # The digestion positions.
-  $_= "_$t"; # Add a dummy symbol to $t to avoid handling a special case.
 
-  while (m/K|R/g) {
+  $at =~ s/(?=.)(?<=.)/\|/g;
+
+  $_= "#$t"; 
+  while (m/$at/g) {
     my $p = pos()-1;
-    my $s = substr($_,$p-1,3);
-    
-    if (substr($_,$p+1,1) ne 'P') {
+    if (index($after,substr($_,$p+1,1)) == -1) {
       push(@pos,$p);
-      next;
     }
   }
 
@@ -1914,8 +2024,8 @@ sub trypsin_digestion_basic {
   unshift(@pos,0);
   ($pos[@pos-1] < length($t)) and push(@pos,length($t));
   
-  for (my $i=0; $i<@pos-1; $i++) {
-    my $s = substr($t,$pos[$i],$pos[$i+1]-$pos[$i]);
+  for ($i=0; $i<@pos-1; $i++) {
+    $s = substr($t,$pos[$i],$pos[$i+1]-$pos[$i]);
     push(@frag,$s);
   }
 
@@ -1924,7 +2034,7 @@ sub trypsin_digestion_basic {
   return (\@frag,\@pos);
 }
 
-
+  
 
 ######################################################################
 # array-of-hashes ff_load($filename, $min_length, $max_length, &tag-function)
@@ -2521,7 +2631,6 @@ sub rt_plots {
     $cxt->renderer->shape(Geometry::Primitive::Circle->new({radius => 5}));
     
     $cc->write_output("$dir/$prot-sample-rt.png"); 
-    #$cc->write_output("$dir/$prot-sample-rt.svg");
  }
 
   
@@ -2605,7 +2714,6 @@ sub rt_plots {
     $cxt->renderer->shape(Geometry::Primitive::Circle->new({radius => 5}));
     
     $cc->write_output("$dir/$prot-irt-rt.png");
-    #$cc->write_output("$dir/$prot-irt-rt.svg");
   }
     
 }
@@ -2836,7 +2944,6 @@ sub intensity_plots {
     $cxt->renderer->shape(Geometry::Primitive::Circle->new({radius => 6}));
     
     $cc->write_output("$dir/$prot-$pep.png");
-    #$cc->write_output("$dir/$prot-$pep.svg");
     
     for (my $i=0; $i<$ngroups; $i++) {
       pop(@series);
@@ -2850,6 +2957,7 @@ sub intensity_plots {
     undef($cc->{contexts}->{default});
     undef($cc->{legend}->{clicker});
     undef($cc->{marker_overlay}->{clicker});
+    undef($cc);
 
     # use Data::Dumper;
     # print Dumper($cc);

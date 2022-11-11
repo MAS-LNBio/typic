@@ -97,6 +97,11 @@ sub form {
 </tr>
 
 <tr>
+<td>Groups file: &nbsp;&nbsp;</td>
+<td><input type="file" name="groupsf" id="groupsf" title="$title{groups}"></td>
+</tr>
+
+<tr>
 <td>SRM Atlas build: &nbsp;&nbsp;</td>
 <td><select name="srmf" id="srmf" title="$title{srmatlas}">
 <option value="">None</option>
@@ -105,8 +110,24 @@ $sopts
 </tr>
 
 <tr>
-<td>Digest (trypsin/P): &nbsp;&nbsp;</td>
-<td><input type="checkbox" id="digest" name="digest" title="$title{digest}"></td>
+<td>Digestion: &nbsp;&nbsp;</td>
+<td>  
+  <input type="radio" id="dig0" name="digest" value="none" checked title="$title{digest}">
+  <label for="dig0">None</label>
+  <input type="radio" id="dig1" name="digest" value="trypsin">
+  <label for="dig1">Trypsin</label>
+  <input type="radio" id="dig2" name="digest" value="argc">
+  <label for="dig2">Arg-C</label>
+  <input type="radio" id="dig4" name="digest" value="chymotrypsin">
+  <label for="dig4">Chymotrypsin</label>
+  <input type="radio" id="dig5" name="digest" value="gluc_de">
+  <label for="dig5">Glu-C DE</label>
+  <input type="radio" id="dig5" name="digest" value="gluc_e">
+  <label for="dig5">Glu-C E</label>
+  <input type="radio" id="dig3" name="digest" value="lysc">
+  <label for="dig3">Lys-C</label>
+  <input type="radio" id="dig3" name="digest" value="trypsin_kr">
+  <label for="dig3">Trypsin KR</label>
 </tr>
 
 <tr>
@@ -144,8 +165,14 @@ or upload <input type="file" name="irtsuf" id="irtsuf" title="$title{irtsu}"></t
 </tr>
 
 <tr>
-<td>Alternative colors: &nbsp;&nbsp;</td>
-<td><input type="checkbox" id="colors" name="colors" title="$title{colors}"></td>
+<td>Ranking colors: &nbsp;&nbsp;</td>
+<td>  <input type="radio" id="col1" name="colors" value="gyr-hi" checked>
+  <label for="col1">Green-Yellow-Red</label>
+  <input type="radio" id="col2" name="colors" value="gyr">
+  <label for="col2">Soft Green-Yellow-Red</label>
+  <input type="radio" id="col3" name="colors" value="bmy">
+  <label for="col3">Blue-Magenta-Yellow</label>
+</tr>
 </tr>
 
 <tr>
@@ -203,8 +230,24 @@ $sopts
 </tr>
 
 <tr>
-<td>Digest (trypsin/P): &nbsp;&nbsp;</td>
-<td><input type="checkbox" id="digest" name="digest" title="$title{digest}"></td>
+<td>Digestion: &nbsp;&nbsp;</td>
+<td>  
+  <input type="radio" id="dig0" name="digest" value="none" checked title="$title{digest}>
+  <label for="dig0">None</label>
+  <input type="radio" id="dig1" name="digest" value="trypsin">
+  <label for="dig1">Trypsin</label>
+  <input type="radio" id="dig2" name="digest" value="argc">
+  <label for="dig2">Arg-C</label>
+  <input type="radio" id="dig4" name="digest" value="chymotrypsin">
+  <label for="dig4">Chymotrypsin</label>
+  <input type="radio" id="dig5" name="digest" value="gluc_de">
+  <label for="dig5">Glu-C DE</label>
+  <input type="radio" id="dig5" name="digest" value="gluc_e">
+  <label for="dig5">Glu-C E</label>
+  <input type="radio" id="dig3" name="digest" value="lysc">
+  <label for="dig3">Lys-C</label>
+  <input type="radio" id="dig3" name="digest" value="trypsin_kr">
+  <label for="dig3">Trypsin KR</label>
 </tr>
 
 <tr>
@@ -242,8 +285,14 @@ or upload <input type="file" name="irtsuf" id="irtsuf" title="$title{irtsu}"></t
 </tr>
 
 <tr>
-<td>Alternative colors: &nbsp;&nbsp;</td>
-<td><input type="checkbox" id="colors" name="colors" title="$title{colors}"></td>
+<td>Ranking colors: &nbsp;&nbsp;</td>
+<td>  <input type="radio" id="col1" name="colors" value="gyr-hi" checked>
+  <label for="col1">Green-Yellow-Red</label>
+  <input type="radio" id="col2" name="colors" value="gyr">
+  <label for="col2">Soft Green-Yellow-Red</label>
+  <input type="radio" id="col3" name="colors" value="bmy">
+  <label for="col3">Blue-Magenta-Yellow</label>
+</tr>
 </tr>
 
 <tr>
@@ -304,6 +353,7 @@ sub subm_job {
   
   if ($input_type eq "agnostic") {
     $agnf = param('agnf');
+    $groupsf = param('groupsf');
     #(!$agnf) and abort("You must upload a file with LC/MS data.");
   }
   else {
@@ -351,6 +401,7 @@ sub subm_job {
 
   if ($input_type eq "agnostic") {
     ($agnf) and ($agnf = save_cgi_file('agnf',$jobid));
+    ($groupsf) and save_cgi_file('groupsf',$jobid);
   }
   else {
     ($peptidesf) and ($peptidesf = save_cgi_file('peptidesf',$jobid));
@@ -373,10 +424,11 @@ sub subm_job {
     $irtsf = "$jobid/$irtsf";
   }  
 
-  my $cmd = "-i $jobid/$idsf -v $ecof -o $jobid -w $datad -a ";
+  my $cmd = "-i $jobid/$idsf -v $ecof -o $jobid -w $datad -a 526 ";
 
   if ($input_type eq "agnostic") {
     ($agnf) and ($cmd .= "-t $jobid/$agnf ");
+    ($groupsf) and ($cmd .= "-g $jobid/$groupsf ");
   }
   else {
     $cmd .= "-p $jobid/$peptidesf ";
@@ -384,14 +436,20 @@ sub subm_job {
     ($groupsf) and ($cmd .= "-g $jobid/$groupsf ");
   }
 
-  ($digest) and ($cmd .= '-d ');
+  ($digest ne "none") and ($cmd .= "-d -z $digest ");
   ($srmf) and ($cmd .= "-s $srmf ");
   ($contsf) and ($cmd .= "-c $contsf ");
   ($protf) and ($cmd .= "-f $protf ");
   ($irtsf) and ($cmd .= "-r $irtsf ");
   ($allpeps) and ($cmd .= '-l 4,10000 ');
-  ($colors) and ($cmd .= '-k E1DAAE,FF934F,CC2D35');
-  
+
+  if ($colors eq "gyr-hi") {
+    $cmd .= '-k 20E020,EEF71B,E02020 ';
+  }
+  elsif ($colors eq "bmy") {
+    $cmd .= '-k 648FFF,DC267F,FFB000 ';
+  }
+    
   open(my $fh,'>>',$jobsf) or abort("subm open $jobsf $!");
   flock($fh,LOCK_EX) or abort("subm lock $jobsf $!");
   
@@ -654,7 +712,7 @@ sub titles {
 	   'proteome' => 'The reference proteome.',
 	   'proteomeu' => 'A fasta file with peptide sequences.\n You may upload a zip archive with a single file.',
 	   'srmatlas' => 'An SRM Atlas build.',
-	   'digest' => 'Digest each protein (trypsin, no misses) and include each peptide.',
+	   'digest' => 'Digest each protein in-silico and include each peptide.\ntrypsin: split at the C-terminus of every K or R not followed by a P\nargc: split at the C-terminus of every R\nchymotrypsin: split at the C-terminus of every F, L, W or Y\ngluc_de: split at the C-terminus of every D or E\ngluc_e: split at the C-terminus of every E\nlysc: split at the C-terminus of every K\ntrypsin_kr: split at the C-terminus of every K or R\n',
 	   'contaminants' => 'Contaminant sequences.',
 	   'contaminantsu' => 'A fasta file with peptide sequences.\n You may upload a zip archive with a single file.',
 	   'irts' => 'Retention times for iRTs.',

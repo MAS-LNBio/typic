@@ -1,66 +1,96 @@
 Will process 5 protein accession numbers in ids.txt.
 Proteome file has 92934 sequences.
-Agnostic file refers to 5 proteins.
+Agnostic file refers to 620 proteins.
 SRM Atlas file has 34764 proteins.
-1: F8VPD4
+1: A0A0C4DGN4
  downloaded from UniProt
- no SRM Atlas entry for F8VPD4
- EATAGNPGGQTVR, downloaded from PepetideAtlas
- LALGIPLPELR, downloaded from PepetideAtlas
- LSLDDLLQR, downloaded from PepetideAtlas
- MALLATVLGR, downloaded from PepetideAtlas
- SVGEVMGIGR, downloaded from PepetideAtlas
- TLGVDLVALATR, downloaded from PepetideAtlas
- VIMGEEVEPVGLMTGSGVVGVK, downloaded from PepetideAtlas
- VLGTSPEAIDSAENR, downloaded from PepetideAtlas
- VPQFSFSR, downloaded from PepetideAtlas
+ no SRM Atlas entry for A0A0C4DGN4
+ DRYFYFGK, downloaded from PepetideAtlas
+ GMVMYTSK, downloaded from PepetideAtlas
+ LGALGGNTQEVTLQPGEYITK, downloaded from PepetideAtlas
+ LGDSWDVK, downloaded from PepetideAtlas
+ MYGPGGGK, downloaded from PepetideAtlas
+ VFVAFQAFLR, downloaded from PepetideAtlas
+ VSVGLLLVK, downloaded from PepetideAtlas
+ YFSTTEDYDHEITGLR, downloaded from PepetideAtlas
 done
-2: K7EN15
+2: H3BTN5
  downloaded from UniProt
- no SRM Atlas entry for K7EN15
- AQEENTWFSYLK, downloaded from PepetideAtlas
- AVPWVILSDGDGTVEK, downloaded from PepetideAtlas
+ no SRM Atlas entry for H3BTN5
+ GADFLVTEVENGGSLGSK, downloaded from PepetideAtlas
+ GDLGIEIPAEK, downloaded from PepetideAtlas
+ GDYPLEAVR, downloaded from PepetideAtlas
+ GSGTAEVELK, downloaded from PepetideAtlas
+ GVNLPGAAVDLPAVSEK, downloaded from PepetideAtlas
+ IENHEGVR, downloaded from PepetideAtlas
+ ITLDNAYMEK, downloaded from PepetideAtlas
+ LDIDSPPITAR, downloaded from PepetideAtlas
+ RFDEILEASDGIMVAR, downloaded from PepetideAtlas
+ VVEVGSK, downloaded from PepetideAtlas
 done
-3: P04406
+3: P02533
  downloaded from UniProt
- GALQNIIPASTGAAK, downloaded from PepetideAtlas
- IISNASCTTNCLAPLAK, downloaded from PepetideAtlas
- IKWGDAGAEYVVESTGVFTTMEK, downloaded from PepetideAtlas
- LEKPAKYDDIK, downloaded from PepetideAtlas
- LISWYDNEFGYSNR, downloaded from PepetideAtlas
- LTGMAFR, downloaded from PepetideAtlas
- LVINGNPITIFQER, downloaded from PepetideAtlas
- LVINGNPITIFQERDPSK, downloaded from PepetideAtlas
- RVIISAPSADAPMFVMGVNHEK, downloaded from PepetideAtlas
- VGVNGFGR, downloaded from PepetideAtlas
- VIHDNFGIVEGLMTTVHAITATQK, downloaded from PepetideAtlas
- VIISAPSADAPMFVMGVNHEK, downloaded from PepetideAtlas
- VPTANVSVVDLTCR, downloaded from PepetideAtlas
- VVDLMAHMASK, downloaded from PepetideAtlas
- VVDLMAHMASKE, downloaded from PepetideAtlas
- WGDAGAEYVVESTGVFTTMEK, downloaded from PepetideAtlas
+ ADLEMQIESLK, downloaded from PepetideAtlas
+ ALEEANADLEVK, downloaded from PepetideAtlas
+ APSTYGGGLSVSSSR, downloaded from PepetideAtlas
+ ASLENSLEETK, downloaded from PepetideAtlas
+ DAEEWFFTK, downloaded from PepetideAtlas
+ DVTSSSR, downloaded from PepetideAtlas
+ DYSPYFK, downloaded from PepetideAtlas
+ EVATNSELVQSGK, downloaded from PepetideAtlas
+ GQVGGDVNVEMDAAPGVDLSR, downloaded from PepetideAtlas
+ GSCGIGGGIGGGSSR, downloaded from PepetideAtlas
+ ILTATVDNANVLLQIDNAR, downloaded from PepetideAtlas
+ IRDWYQR, downloaded from PepetideAtlas
+ ISSVLAGGSCR, downloaded from PepetideAtlas
+ LAADDFR, previously not found in PeptideAtlas
+ LASYLDK, downloaded from PepetideAtlas
+ LEQEIATYR, downloaded from PepetideAtlas
+ NHEEEMNALR, downloaded from PepetideAtlas
+ QFTSSSSMK, downloaded from PepetideAtlas
+ SEISELR, downloaded from PepetideAtlas
+ SEISELRR, downloaded from PepetideAtlas
+ TMQNLEIELQSQLSMK, downloaded from PepetideAtlas
+ TRLEQEIATYR, downloaded from PepetideAtlas
+ VLDELTLAR, downloaded from PepetideAtlas
+ VTMQNLNDR, downloaded from PepetideAtlas
+ VVSTHEQVLR, downloaded from PepetideAtlas
+ YETELNLR, downloaded from PepetideAtlas
 done
-4: P30520
+4: Q96DA0
  downloaded from UniProt
- AHIVFDFHQAADGIQEQQR, downloaded from PepetideAtlas
- ESMIQLF, downloaded from PepetideAtlas
- FIEDELQIPVK, downloaded from PepetideAtlas
- LDGEIIPHIPANQEVLNK, downloaded from PepetideAtlas
- LDILDMFTEIK, downloaded from PepetideAtlas
- MCDLVSDFDGFSER, downloaded from PepetideAtlas
- VGIGAFPTEQDNEIGELLQTR, downloaded from PepetideAtlas
- VVDLLAQDADIVCR, downloaded from PepetideAtlas
+ DRYFYFGK, downloaded from PepetideAtlas
+ GMVMYTSK, downloaded from PepetideAtlas
+ LGALGGNTQEVTLQPGEYITK, downloaded from PepetideAtlas
+ LGDSWDVK, downloaded from PepetideAtlas
+ MYGPGGGK, downloaded from PepetideAtlas
+ VFVAFQAFLR, downloaded from PepetideAtlas
+ VSVGLLLVK, downloaded from PepetideAtlas
+ YFSTTEDYDHEITGLR, downloaded from PepetideAtlas
 done
-5: Q5T5C7
+5: Q9UBG3
  downloaded from UniProt
- no SRM Atlas entry for Q5T5C7
- EFMPPGLQELIPFVKPAPIEQEPSK, downloaded from PepetideAtlas
- ELVSCSNCTDYQAR, downloaded from PepetideAtlas
- EVMQEVAQLSQFDEELYK, downloaded from PepetideAtlas
- GYIPIYTPFFMR, downloaded from PepetideAtlas
- LLIDEAILK, downloaded from PepetideAtlas
- TICAILENYQTEK, downloaded from PepetideAtlas
- VLDLDLFR, downloaded from PepetideAtlas
- YLIATSEQPIAALHR, downloaded from PepetideAtlas
+ CVTEGQGDR, downloaded from PepetideAtlas
+ EFLVLVFK, downloaded from PepetideAtlas
+ ELYSYLR, downloaded from PepetideAtlas
+ EQGQTQTQPGSGQR, downloaded from PepetideAtlas
+ GQNRPGVQTQGQATGSAWVSSYDR, downloaded from PepetideAtlas
+ GTEIHGQGR, downloaded from PepetideAtlas
+ GTETHGQGR, downloaded from PepetideAtlas
+ ISPQIQLSGQTEQTQK, downloaded from PepetideAtlas
+ LDQGNLHTSVSSAQGQDAAQSEEK, downloaded from PepetideAtlas
+ LLDEDHTGTVEFK, downloaded from PepetideAtlas
+ LLEQEFADVIVKPHDPATVDEVLR, downloaded from PepetideAtlas
+ MPQLLQNINGIIEAFR, downloaded from PepetideAtlas
+ QAESQSQER, downloaded from PepetideAtlas
+ QEWSSTHPR, downloaded from PepetideAtlas
+ QPTVVGEEWVDDHSR, downloaded from PepetideAtlas
+ QTQEATNDQNR, downloaded from PepetideAtlas
+ RLLEQEFADVIVKPHDPATVDEVLR, downloaded from PepetideAtlas
+ RNQTTEMRPER, downloaded from PepetideAtlas
+ SGTEVGR, downloaded from PepetideAtlas
+ SQTVSHGGAR, downloaded from PepetideAtlas
+ TEGNCTALTR, downloaded from PepetideAtlas
+ VAQACFK, downloaded from PepetideAtlas
 done
 finished.

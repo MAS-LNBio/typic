@@ -13,7 +13,7 @@ PTM evidences	The source of post-translational modifications (experimental, non-
 Occurrences in contaminant sequences	The number of occurrences of the peptide in contaminant sequences.	
 Methionines	The number of methionine residues in the peptide sequence
 Methionine positions	The position of methionine residues in the peptide sequence
-Missing cleavages	The number of missing trypsin cleavages
+Missing cleavages	The number of missing cleavages
 Missing cleavage positions	The position of the missing cleavage site in the peptide sequence
 Hydrophobicity index	A measure of relative hydrophobicity evaluated based only on amino acid composition
 Theoretical retention time (wrt iRT)	A theoretical retention time for the peptide based on the hydrophobicity index and on experimental retention times of iRTs

@@ -29,7 +29,7 @@ $cwd = File::HomeDir->my_home; #cwd();
 
 $mqaccsf = '';
 $agnaccsf = '';
-$ecof = (-f "$cwd/eco.obo") ? "$cwd/eco.obo" : '';
+$ecof = '';
 $agnosticf = '';
 $peptidesf = '';
 $evidencef = '';
@@ -42,9 +42,10 @@ $irtsf = '';
 $outd = '';
 $datad = '';
 $patlas = 1;
+$pabuild = 526;
 
 $pepslen = '7,25';
-$colors = '20E020,EEF71B,E02020';
+$colors = '2AAF0F,DED837,DE3737';
 $update = 0;
 $plots = 1;
 
@@ -52,7 +53,7 @@ $plots = 1;
 $mw = MainWindow->new();
 #print $mw->fontActual(fontname);
 
-$mw->geometry("600x450+200+200");
+$mw->geometry("600x480+200+200");
 $mw->optionAdd('*font', 'Arial 10');
 
 $book = $mw->NoteBook()->pack( -fill=>'both',-expand=>1 );
@@ -83,11 +84,45 @@ $f->Button(-text => "...",-command => [ \&select_file,\$cwd,\$agnosticf ])->pack
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
 $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 
-$l = $fa->Label(-text => "Digest:",-anchor => 'e');
+$l = $fa->Label(-text => "Groups file:",-anchor => 'e');
 $f = $fa->Frame(); 
-$f->Checkbutton(-variable => \$digest)->pack(-side => 'left');
+$f->Entry(-textvariable => \$groupsf,-width => $tvl)->pack(-side => 'left');
+$f->Button(-text => "...",-command => [\&select_file,\$cwd,\$groupsf ])->pack(-side => 'left');
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
 $f->grid(-sticky =>'w',-column => 1,-row => $r++);
+
+$digest = "None";
+%enzyme =  ('Trypsin' => 'trypsin', 'Arg-C' => 'argc', 'Chymotrypsin' => 'chymotrypsin',
+	    'Glu-C DE' => 'gluc_de', 'Glu-C E' => 'gluc_e', 'Lys-C' => 'lysc',
+	    'Trypsin KR' => 'trypsin_kr');
+
+@enzyme = sort(keys(%enzyme));
+unshift(@enzyme,"None");
+
+$l = $fa->Label(-text => "Digestion:",-anchor => 'e');
+$f = $fa->Frame();
+
+for ($i=0; $i<4; $i++) {
+  $_ = "$enzyme[$i]";
+  $f->Radiobutton(-text => $_, -variable => \$digest, 
+		  -value => $_)->pack(-side => 'left');
+}
+  
+$l->grid(-sticky =>'e',-column => 0,-row => $r);
+$f->grid(-sticky =>'w',-column => 1,-row => $r++);
+
+$l = $fa->Label(-text => "",-anchor => 'e');
+$f = $fa->Frame();
+
+for ($i=4; $i<@enzyme; $i++) {
+  $_ = "$enzyme[$i]";
+  $f->Radiobutton(-text => $_, -variable => \$digest, 
+		  -value => $_)->pack(-side => 'left');
+}
+  
+$l->grid(-sticky =>'e',-column => 0,-row => $r);
+$f->grid(-sticky =>'w',-column => 1,-row => $r++);
+
 
 $l = $fa->Label(-text => "SRM Atlas file:",-anchor => 'e');
 $f = $fa->Frame(); 
@@ -113,6 +148,8 @@ $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 $l = $fa->Label(-text => "Add data from PeptdideAtlas:",-anchor => 'e');
 $f = $fa->Frame(); 
 $f->Checkbutton(-variable => \$patlas)->pack(-side => 'left');
+$f->Label(-text => "build:",-anchor => 'e')->pack(-side => 'left');
+$f->Entry(-textvariable => \$pabuild,-width => 8)->pack(-side => 'left');
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
 $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 
@@ -165,9 +202,28 @@ $f->Button(-text => "...",-command => [\&select_file,\$cwd,\$groupsf ])->pack(-s
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
 $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 
-$l = $fm->Label(-text => "Digest:",-anchor => 'e');
-$f = $fm->Frame(); 
-$f->Checkbutton(-variable => \$digest)->pack(-side => 'left');
+$digest = "None";
+$l = $fm->Label(-text => "Digestion:",-anchor => 'e');
+$f = $fm->Frame();
+
+for ($i=0; $i<4; $i++) {
+  $_ = "$enzyme[$i]";
+  $f->Radiobutton(-text => $_, -variable => \$digest, 
+		  -value => $_)->pack(-side => 'left');
+}
+  
+$l->grid(-sticky =>'e',-column => 0,-row => $r);
+$f->grid(-sticky =>'w',-column => 1,-row => $r++);
+
+$l = $fm->Label(-text => "",-anchor => 'e');
+$f = $fm->Frame();
+
+for ($i=4; $i<@enzyme; $i++) {
+  $_ = "$enzyme[$i]";
+  $f->Radiobutton(-text => $_, -variable => \$digest, 
+		  -value => $_)->pack(-side => 'left');
+}
+  
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
 $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 
@@ -195,6 +251,8 @@ $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 $l = $fm->Label(-text => "Add data from PeptdideAtlas:",-anchor => 'e');
 $f = $fm->Frame(); 
 $f->Checkbutton(-variable => \$patlas)->pack(-side => 'left');
+$f->Label(-text => "build:",-anchor => 'e')->pack(-side => 'left');
+$f->Entry(-textvariable => \$pabuild,-width => 8)->pack(-side => 'left');
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
 $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 
@@ -263,7 +321,14 @@ $fo->place(-relx => 0.5,-anchor => "center",-rely => 0.5);
 
 ################################################################################
 $about = q{
-There's a long story about this software.
+Typic is a program that collects data from multiple sources and
+produces a ranking of the peptides of a protein to support the
+selection of proteotypic peptides.  Proteotypic peptides are those
+peptides that uniquely identify a protein and are consistently
+identified when a sample with a protein mixture is analyzed in an
+LC/MS experiment.
+
+Refer to typic-manual.txt for a description of Typic arguments.
 };
 
 $txt = $abt->Scrolled("Text",-scrollbars => 'oe')->pack(-expand => 1,-fill => 'both');
@@ -313,6 +378,7 @@ sub command_builder {
   if ($agnaccsf && !$mqaccsf) {
     $cmd .= "-i $agnaccsf ";
     ($agnosticf) and ($cmd .= "-t $agnosticf ");
+    ($groupsf) and ($cmd .= "-g $groupsf ");
   }
 
   if ($mqaccsf && !$agnaccsf) {
@@ -324,12 +390,13 @@ sub command_builder {
     
   ($ecof) and ($cmd .= "-v $ecof ");
 
-  ($digest) and ($cmd .= "-d ");
+  ($digest ne "None") and ($cmd .= "-d -z $enzyme{$digest} ");
+  
   ($srmf) and ($cmd .= "-s $srmf ");
   ($proteomef) and ($cmd .= "-f $proteomef ");
   ($contf ne '') and ($cmd .= "-c $contf ");
   ($irtsf) and ($cmd .= "-r $irtsf ");
-  ($patlas) and ($cmd .= "-a ");
+  ($patlas) and ($cmd .= "-a $pabuild ");
   ($outd) and ($cmd .= "-o $outd ");
   ($datad) and ($cmd .= "-w $datad ");
   ($update) and ($cmd .= "-u ");
@@ -339,6 +406,6 @@ sub command_builder {
 
   #$id = $book->raised();
   #print "$id $cmd\n";
-  
+
   return $cmd;
 }
