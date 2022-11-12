@@ -105,7 +105,7 @@ sub form {
 <tr>
 <td>Enzyme: &nbsp;&nbsp;</td>
 <td>  
-  <input type="radio" id="dig1" name="enzyme" value="trypsin" checked title="$title{enzyme}>
+  <input type="radio" id="dig1" name="enzyme" value="trypsin" checked title="$title{enzyme}">
   <label for="dig1">Trypsin</label>
   <input type="radio" id="dig2" name="enzyme" value="argc">
   <label for="dig2">Arg-C</label>
@@ -727,7 +727,7 @@ sub titles {
 	   'proteomeu' => 'A fasta file with peptide sequences.\n You may upload a zip archive with a single file.',
 	   'srmatlas' => 'An SRM Atlas build.',
 	   'digest' => 'Include peptides resulting from in-silico digestion.',	   
-	   'digest' => 'Digest each protein in-silico and include each peptide.\ntrypsin: split at the C-terminus of every K or R not followed by a P\nargc: split at the C-terminus of every R\nchymotrypsin: split at the C-terminus of every F, Y, W, M or L not followed by M or P\ngluc_de: split at the C-terminus of every D or E\ngluc_d: split at the C-terminus of every D\ngluc_e: split at the C-terminus of every E\nlysc: split at the C-terminus of every K\ntrypsin_kr: split at the C-terminus of every K or R\n',
+	   'enzyme' => 'Digest each protein in-silico and include each peptide.\ntrypsin: split at the C-terminus of every K or R not followed by a P\nargc: split at the C-terminus of every R\nchymotrypsin: split at the C-terminus of every F, Y, W, M or L not followed by M or P\ngluc_de: split at the C-terminus of every D or E\ngluc_d: split at the C-terminus of every D\ngluc_e: split at the C-terminus of every E\nlysc: split at the C-terminus of every K\ntrypsin_kr: split at the C-terminus of every K or R\n',
 	   'contaminants' => 'Contaminant sequences.',
 	   'contaminantsu' => 'A fasta file with peptide sequences.\n You may upload a zip archive with a single file.',
 	   'irts' => 'Retention times for iRTs.',
