@@ -17,5 +17,5 @@ mergerow{2}PTM evidences	non-experimental evidence	Predicted PTM (Uniprot Databa
 	experimental evidence	Evidence of experimental PTMs (Uniprot Database)	
 Methionines	number	The number of methionine residues in the peptide sequence	green if zero or red if greater than zero
 missing cleavages	number	The number of missed enzymatic cleavages	green if zero or red if greater than zero
-first aa	amino acid	The amino acid in the first position of the peptide sequence. Basic AAs and dibasic AAs (D, E, K, R) or proline (P) in this position indicate a probable missed enzymatic cleavage	red if D, E, K, R or P, green otherwise
-next aa	amino acid	The amino acid that follows the last amino acid of the peptide. Basic AAs and dibasic AAs (D, E, K, R) or proline in this position indicate a probable missed enzymatic cleavage	red if D, E, K, R or P, green otherwise
+first aa	amino acid	If the enzyme is trypsin, the amino acid in the first position of the peptide sequence. D or E in this position indicate a probable missed enzymatic cleavage	red if D or E, green otherwise
+next aa	amino acid	If the enzyme is trypsin, the amino acid that follows the last amino acid of the peptide. D or E in this position indicate a probable missed enzymatic cleavage	red if D or E, green otherwise

@@ -43,12 +43,19 @@ $outd = '';
 $datad = '';
 $patlas = 1;
 $pabuild = 526;
-
 $pepslen = '7,25';
 $colors = '2AAF0F,DED837,DE3737';
 $update = 0;
 $plots = 1;
+$enzyme = 'Trypsin';
 
+@enzyme = ('Trypsin', 'Arg-C', 'Chymotrypsin', 'Glu-C DE', 'Glu-C D',
+	   'Glu-C E', 'Lys-C', 'Trypsin KR');
+
+%enzyme = ('Trypsin' => 'trypsin', 'Arg-C' => 'argc',
+	   'Chymotrypsin' => 'chymotrypsin', 'Glu-C DE' => 'gluc_de',
+	   'Glu-C D' => 'gluc_d', 'Glu-C E' => 'gluc_e',
+	   'Lys-C' => 'lysc', 'Trypsin KR' => 'trypsin_kr');
 
 $mw = MainWindow->new();
 #print $mw->fontActual(fontname);
@@ -91,21 +98,12 @@ $f->Button(-text => "...",-command => [\&select_file,\$cwd,\$groupsf ])->pack(-s
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
 $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 
-$digest = "None";
-%enzyme =  ('Trypsin' => 'trypsin', 'Arg-C' => 'argc', 'Chymotrypsin' => 'chymotrypsin',
-	    'Glu-C DE' => 'gluc_de', 'Glu-C E' => 'gluc_e', 'Lys-C' => 'lysc',
-	    'Trypsin KR' => 'trypsin_kr');
-
-@enzyme = sort(keys(%enzyme));
-unshift(@enzyme,"None");
-
-$l = $fa->Label(-text => "Digestion:",-anchor => 'e');
+$l = $fa->Label(-text => "Enzyme:",-anchor => 'e');
 $f = $fa->Frame();
 
 for ($i=0; $i<4; $i++) {
   $_ = "$enzyme[$i]";
-  $f->Radiobutton(-text => $_, -variable => \$digest, 
-		  -value => $_)->pack(-side => 'left');
+  $f->Radiobutton(-text => $_, -variable => \$enzyme, -value => $_)->pack(-side => 'left');
 }
   
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
@@ -114,15 +112,20 @@ $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 $l = $fa->Label(-text => "",-anchor => 'e');
 $f = $fa->Frame();
 
-for ($i=4; $i<@enzyme; $i++) {
+for (; $i < @enzyme; $i++) {
   $_ = "$enzyme[$i]";
-  $f->Radiobutton(-text => $_, -variable => \$digest, 
-		  -value => $_)->pack(-side => 'left');
+  $f->Radiobutton(-text => $_, -variable => \$enzyme, -value => $_)->pack(-side => 'left');
 }
-  
+
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
 $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 
+
+$l = $fa->Label(-text => "Include in-silico digestion:",-anchor => 'e');
+$f = $fa->Frame(); 
+$f->Checkbutton(-variable => \$digest)->pack(-side => 'left');
+$l->grid(-sticky =>'e',-column => 0,-row => $r);
+$f->grid(-sticky =>'w',-column => 1,-row => $r++);
 
 $l = $fa->Label(-text => "SRM Atlas file:",-anchor => 'e');
 $f = $fa->Frame(); 
@@ -202,14 +205,12 @@ $f->Button(-text => "...",-command => [\&select_file,\$cwd,\$groupsf ])->pack(-s
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
 $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 
-$digest = "None";
-$l = $fm->Label(-text => "Digestion:",-anchor => 'e');
+$l = $fm->Label(-text => "Enzyme:",-anchor => 'e');
 $f = $fm->Frame();
 
 for ($i=0; $i<4; $i++) {
   $_ = "$enzyme[$i]";
-  $f->Radiobutton(-text => $_, -variable => \$digest, 
-		  -value => $_)->pack(-side => 'left');
+  $f->Radiobutton(-text => $_, -variable => \$enzyme, -value => $_)->pack(-side => 'left');
 }
   
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
@@ -218,12 +219,17 @@ $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 $l = $fm->Label(-text => "",-anchor => 'e');
 $f = $fm->Frame();
 
-for ($i=4; $i<@enzyme; $i++) {
+for (; $i < @enzyme; $i++) {
   $_ = "$enzyme[$i]";
-  $f->Radiobutton(-text => $_, -variable => \$digest, 
-		  -value => $_)->pack(-side => 'left');
+  $f->Radiobutton(-text => $_, -variable => \$enzyme, -value => $_)->pack(-side => 'left');
 }
-  
+
+$l->grid(-sticky =>'e',-column => 0,-row => $r);
+$f->grid(-sticky =>'w',-column => 1,-row => $r++);
+
+$l = $fm->Label(-text => "Include in-silico digestion:",-anchor => 'e');
+$f = $fm->Frame(); 
+$f->Checkbutton(-variable => \$digest)->pack(-side => 'left');
 $l->grid(-sticky =>'e',-column => 0,-row => $r);
 $f->grid(-sticky =>'w',-column => 1,-row => $r++);
 
@@ -390,7 +396,8 @@ sub command_builder {
     
   ($ecof) and ($cmd .= "-v $ecof ");
 
-  ($digest ne "None") and ($cmd .= "-d -z $enzyme{$digest} ");
+  ($digest) and ($cmd .= "-d ");
+  $cmd .= "-z $enzyme{$enzyme} ";
   
   ($srmf) and ($cmd .= "-s $srmf ");
   ($proteomef) and ($cmd .= "-f $proteomef ");

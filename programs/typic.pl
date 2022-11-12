@@ -115,13 +115,16 @@ options for data on samples in agnostic format:
  -t   An agnostic input file. 
  -g   A tsv file with experimental groups.
 
+options related to the experiment:
+ -z   Select digestion enzyme among: 
+      trypsin ((K or R) not P), trypsin_kr (K or R),
+      argc (R), chymotrypsin ((F, Y, W, M or L) not (M or P)), lysc (K),
+      gluc_de (D or E), gluc_d (D), gluc_e (E).
+      The default is: -z trypsin
+
 options for other sources of peptides:
  -s   Include peptides from an SRM Atlas build file. 
  -d   Include peptides from in-silico digestion (no misses).
- -z   Select digestion enzyme: trypsin ((K or R) not P), argc (R), 
-      chymotrypsin (F, L, W or Y), gluc_de (D or E), gluc_e (E), lysc (K),
-      trypsin_kr (K or R).
-      The default is: -z trypsin
 
 options for other sources of data:
  -f   A proteome file in fasta format. 
@@ -198,8 +201,8 @@ else {
 $outd =~ s/\/$//;
 $datad =~ s/\/$//;
 
-%enzyme =  ('argc' => ['R',''], 'chymotrypsin' => ['FLWY',''],
-	    'gluc_de' => ['DE',''], 'gluc_e' => ['E',''],
+%enzyme =  ('argc' => ['R',''], 'chymotrypsin' => ['FYWML','MP'],
+	    'gluc_de' => ['DE',''], 'gluc_d' => ['D',''], 'gluc_e' => ['E',''],
 	    'lysc' => ['K',''], 'trypsin' => ['KR','P'], 'trypsin_kr' => ['KR','']);
 
 (!exists($enzyme{$enzyme})) and abend("Invalid digestion enzyme.");
@@ -484,7 +487,7 @@ if ($irtf) {
 ### location in gene, uniqueness, its uniprot features, and hydro
 ### index etc.  Then write data to an xlsx.
 
-$int_plots_height = 0;
+$iplotsh = 0;
 
 $id = 0;
 foreach $prot (@prots) {
@@ -561,7 +564,7 @@ foreach $prot (@prots) {
     %peps = ();
     for ($i=0; $i<@{$sample{$prot}}; $i+=$samplew) {
       $pep = uc($sample{$prot}[$i]);
-      (!$allpeps && (length($pep) < $minlen || length($pep) > $maxlen)) and next;
+      (length($pep) < $minlen || length($pep) > $maxlen) and next;
       $peps{$pep} = 1;
     }
     @peps = keys(%peps);
@@ -582,7 +585,7 @@ foreach $prot (@prots) {
     for ($i=0; $i<@{$sample{$prot}}; $i+=$samplew) {
       $pep = uc(@{$sample{$prot}}[$i]);
 
-      (!$allpeps && (length($pep) < $minlen || length($pep) > $maxlen)) and next;
+      (length($pep) < $minlen || length($pep) > $maxlen) and next;
 
       $rt = @{$sample{$prot}}[$i+1];
       $int = @{$sample{$prot}}[$i+2];
@@ -634,10 +637,10 @@ foreach $prot (@prots) {
       }
 
       if ($groupsf) {
-	$int_plots_height = intensity_plots($protaka?$protaka:$prot,\%intseries,\%groups,$outd);
+	$iplotsh = intensity_plots('AGNOSTIC',$protaka?$protaka:$prot,\%intseries,\%groups,$outd);
       }
       else {
-	$int_plots_height = intensity_plots($protaka?$protaka:$prot,\%intseries,undef,$outd);
+	$iplotsh = intensity_plots('AGNOSTIC',$protaka?$protaka:$prot,\%intseries,undef,$outd);
       }
     }
   }
@@ -648,7 +651,7 @@ foreach $prot (@prots) {
     @peps = ();
     for ($i=0; $i<@{$sample{$prot}}; $i+=$samplew) {
       $pep = uc($sample{$prot}[$i]);
-      (!$allpeps && (length($pep) < $minlen || length($pep) > $maxlen)) and next;
+      (length($pep) < $minlen || length($pep) > $maxlen) and next;
       push(@peps,$pep);
     }
 
@@ -669,7 +672,7 @@ foreach $prot (@prots) {
       %h = ();
 
       $pep = uc(@{$sample{$prot}}[$i]);
-      (!$allpeps && (length($pep) < $minlen || length($pep) > $maxlen)) and next;
+      (length($pep) < $minlen || length($pep) > $maxlen) and next;
       $h{mqunqgrp} = @{$sample{$prot}}[$i+1];
       $h{mqunqpro} = @{$sample{$prot}}[$i+2];
       $h{int} = @{$sample{$prot}}[$i+3];
@@ -687,10 +690,10 @@ foreach $prot (@prots) {
 	}
 
 	if ($groupsf) {
-	  $int_plots_height = intensity_plots($protaka?$protaka:$prot,\%intseries,\%groups,$outd);
+	  $iplotsh = intensity_plots('MQ',$protaka?$protaka:$prot,\%intseries,\%groups,$outd);
 	}
 	else {
-	  $int_plots_height = intensity_plots($protaka?$protaka:$prot,\%intseries,undef,$outd);
+	  $iplotsh = intensity_plots('MQ',$protaka?$protaka:$prot,\%intseries,undef,$outd);
 	}
       }
       else {
@@ -734,14 +737,12 @@ foreach $prot (@prots) {
     @P = @P[@index];
   }
 
-
-
   ### Add peptides from SRM Atlas:
   $nsrm = 0;
   if (exists($srm{$prot})) { 
     for ($i=0; $i<@{$srm{$prot}}; $i+=1) {
       $pep = uc(@{$srm{$prot}}[$i]);
-      (!$allpeps && (length($pep) < $minlen || length($pep) > $maxlen)) and next;
+      (length($pep) < $minlen || length($pep) > $maxlen) and next;
       if (!exists($H{$pep})) {
 	%h = ();
 	$h{src} = 'SRM Atlas';
@@ -766,7 +767,7 @@ foreach $prot (@prots) {
     if (exists($srm{$aka})) { 
       for ($i=0; $i<@{$srm{$aka}}; $i+=1) {
 	$pep = uc(@{$srm{$aka}}[$i]);
-	(!$allpeps && (length($pep) < $minlen || length($pep) > $maxlen)) and next;
+	(length($pep) < $minlen || length($pep) > $maxlen) and next;
 	if (!exists($H{$pep})) {
 	  %h = ();
 	  $h{src} = "SRM Atlas ($aka)";
@@ -803,7 +804,7 @@ foreach $prot (@prots) {
     
     for ($i=0; $i<@frag; $i+=1) {
       $pep = uc($frag[$i]);
-      (!$allpeps && (length($pep) < $minlen || length($pep) > $maxlen)) and next;
+      (length($pep) < $minlen || length($pep) > $maxlen) and next;
 
       if (!exists($H{$pep})) {
 	%h = ();
@@ -1160,7 +1161,8 @@ foreach $prot (@prots) {
   $floatf = $xx->add_format();
   $floatf->set_num_format('0.000');
   
-  ### Write sht1 for protein and evaluate enabled peptides and peptides rank:
+
+  ### Write sht1 (peptides) and evaluate peptides rank:
   $sht1 = $xx->add_worksheet('peptides');
 
   @W = ();
@@ -1213,8 +1215,8 @@ foreach $prot (@prots) {
     if (!$nofigures && $samplew > 3 &&
 	((!$protaka && -f "$outd/$prot-$pep.png") || ($protaka && -f "$outd/$protaka-$pep.png"))) {      
       $figpos{$pep} = $p;
-      $sht1->write_url($r,$c++,'internal:intensity-plots!A'.$p,undef,$pep);
-      $p += int($int_plots_height / 20) + 2;
+      $sht1->write_url($r,$c++,'internal:plots!A'.$p,undef,$pep);
+      $p += int($iplotsh / 20) + 2;
     }
     else {
       $sht1->write($r,$c++,$pep);
@@ -1222,14 +1224,10 @@ foreach $prot (@prots) {
     
     $l = length($pep);
     $sht1->write($r,$c++,$l);
-    $rank .= ($allpeps && $l >= $minlen && $l <= $maxlen ? '0' : '2');
-    
     $sht1->write($r,$c++,"$h{beg}-$h{end} $h{mat}");
-
-    $fromsmp = ($h{src} =~ /sample/ ? 1 : 0);
-    
     $sht1->write($r,$c++,$h{src});
 
+    $fromsmp = ($h{src} =~ /sample/ ? 1 : 0);
     if ($fromsmp) {
       $rank .= '0';
     }
@@ -1345,23 +1343,22 @@ foreach $prot (@prots) {
     $sht1->write($r,$c++,$h{laa},$rightf);
     $sht1->write($r,$c++,$h{naa},$rightf);
 
-    if ($h{faa} eq 'D' || $h{faa} eq 'E' || $h{faa} eq 'P' || 
-	($h{faa} eq 'R' && $h{paa} eq 'R') ||
-	($h{faa} eq 'K' && $h{paa} eq 'K')) {
-      $rank .= '1';
-    }
-    else {
-      $rank .= '0';
+    if ($enzyme =~ /^trypsin/) {
+      if ($h{faa} eq 'D' || $h{faa} eq 'E') {
+	$rank .= '2';
+      }
+      else {
+	$rank .= '0';
+      }
+
+      if ($h{naa} eq 'D' || $h{naa} eq 'E') {
+	$rank .= '2';
+      }
+      else {
+	$rank .= '0';
+      }
     }
 
-    if ($h{naa} eq 'D' || $h{naa} eq 'E' || $h{naa} eq 'P' ||
-	($h{naa} eq 'R' && $h{laa} eq 'R') ||
-	($h{naa} eq 'K' && $h{laa} eq 'K')) {
-      $rank .= '2';
-    }
-    else {
-      $rank .= '0';
-    }
     
     ($patlas) and $sht1->write($r,$c++,$h{instruments});
 
@@ -1397,7 +1394,10 @@ foreach $prot (@prots) {
     push(@W,'Occurrences in proteome sequences');
   }
   
-  push(@W,('PTMs','PTM evidences','Methionines','Missing cleavages','First aa','Next aa'));
+  push(@W,('PTMs','PTM evidences','Methionines','Missing cleavages'));
+
+  ($enzyme =~ /^trypsin/) && push(@W,('First aa','Next aa'));
+  
   ($patlas && ($peptidesf || $agnosticf || $srmf)) and
     push(@W,'Instruments reported in PeptideAtlas experiments (from sample or SRM Atlas)');
 
@@ -1418,14 +1418,7 @@ foreach $prot (@prots) {
       $sht2->write($r,$c++,$pep);
     }
 
-    $l = length($pep);
-
-    if ($allpeps) {
-      $sht2->write($r,$c++,$l,$l >= $minlen && $l <= $maxlen ? $greenrf : $redrf);
-    }
-    else {
-      $sht2->write($r,$c++,$l);
-    }      
+    $sht2->write($r,$c++,length($pep));
 
     if ($h{src} =~ /sample/) {
       $sht2->write($r,$c++,$h{src},$greenlf);
@@ -1489,23 +1482,21 @@ foreach $prot (@prots) {
     
     $sht2->write($r,$c++,$h{metocc},$h{metocc} == 0 ? $greenrf : $redrf);
     $sht2->write($r,$c++,$h{missocc},$h{missocc} == 0 ? $greenrf : $redrf);
-    
-    if ($h{faa} eq 'D' || $h{faa} eq 'E' || $h{faa} eq 'P' || 
-	($h{faa} eq 'R' && $h{paa} eq 'R') ||
-	($h{faa} eq 'K' && $h{paa} eq 'K')) {
-      $sht2->write($r,$c++,$h{faa},$redrf);
-    }
-    else {
-      $sht2->write($r,$c++,$h{faa},$greenrf);
-    }
 
-    if ($h{naa} eq 'D' || $h{naa} eq 'E' || $h{naa} eq 'P' ||
-	($h{naa} eq 'R' && $h{laa} eq 'R') ||
-	($h{naa} eq 'K' && $h{laa} eq 'K')) {
-      $sht2->write($r,$c++,$h{naa},$redrf);
-    }
-    else {
-      $sht2->write($r,$c++,$h{naa},$greenrf);
+    if ($enzyme =~ /^trypsin/) {
+      if ($h{faa} eq 'D' || $h{faa} eq 'E') {
+	$sht2->write($r,$c++,$h{faa},$redrf);
+      }
+      else {
+	$sht2->write($r,$c++,$h{faa},$greenrf);
+      }
+
+      if ($h{naa} eq 'D' || $h{naa} eq 'E') {
+	$sht2->write($r,$c++,$h{naa},$redrf);
+      }
+      else {
+	$sht2->write($r,$c++,$h{naa},$greenrf);
+      }
     }
 
     ($patlas) and $sht2->write($r,$c++,$h{instruments});
@@ -1519,7 +1510,7 @@ foreach $prot (@prots) {
   if (!$nofigures) {
 
     if ($samplew > 3) {
-      $sh = $xx->add_worksheet('intensity-plots');
+      $sh = $xx->add_worksheet('plots');
       foreach $pep (sort(keys(%figpos))) {
 	$file = $protaka ? "$outd/$protaka-$pep.png" : "$outd/$prot-$pep.png";
 	$sh->insert_image("A$figpos{$pep}",$file);
@@ -2721,10 +2712,11 @@ sub rt_plots {
 
 
 ################################################################################
-# int intensity_plots($prot, \%sample-intensities, \%groups, $dir)
+# int intensity_plots($src, $prot, \%sample-intensities, \%groups, $dir)
 #
 # Plot intensities for each peptide of a protein across samples.
 #
+# $src is either 'MQ' or 'AGNOSTIC'
 # $prot is the protein ACC.
 # %sample-intensities is a HoH with the intensity of each peptide
 #   in every sample.  That is, peptide => { sample => intensity }.
@@ -2735,6 +2727,7 @@ sub rt_plots {
 
 sub intensity_plots {
 
+  my $src = shift;
   my $prot = shift;
   my $smps = shift;
   my $grps = shift;
@@ -2937,8 +2930,7 @@ sub intensity_plots {
 
     my $s = 12/300;
     $cxt->range_axis->range(Chart::Clicker::Data::Range->new(min => -$s*$max, max => (1+$s)*$max));
-    $cxt->range_axis->label('intensity');
-    #$cxt->range_axis->label('log10(intensity)');
+    $cxt->range_axis->label($src eq 'MQ' ? 'intensity' : 'quantitative information');
     
     $cxt->renderer(Chart::Clicker::Renderer::Point->new);
     $cxt->renderer->shape(Geometry::Primitive::Circle->new({radius => 6}));

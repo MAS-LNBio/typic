@@ -12,7 +12,8 @@ use Encode;
 use Fcntl ':flock';
 use Time::Local;
 
-$doned = 'finished';
+
+$doned = 'finished';  # The same goes in typic-daemon.
 
 $id = param('id');
 $file = "$doned/$id.zip";

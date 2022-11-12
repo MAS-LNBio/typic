@@ -3,7 +3,6 @@
 # This file is part of Typic version 6.
 # 2022 Guilherme P. Telles.
 
-
 use CGI qw(:standard -no_xhtml);
 use CGI::Carp 'fatalsToBrowser';
 $CGI::LIST_CONTEXT_WARN = 0; 
@@ -14,10 +13,12 @@ use Fcntl ':flock';
 use Time::Local;
 use Archive::Zip qw(:ERROR_CODES :CONSTANTS);
 
+
+$jobsf = 'typic.jobs'; # The same goes in typic-daemon.
+
 $ecof = 'typic-data/eco.obo';  # -v for typic.pl
 $datad = 'typic-data';         # -w for typic.pl
 
-$jobsf = 'typic.jobs';
 
 $| = 1; 
 umask(0007);
@@ -102,6 +103,32 @@ sub form {
 </tr>
 
 <tr>
+<td>Enzyme: &nbsp;&nbsp;</td>
+<td>  
+  <input type="radio" id="dig1" name="enzyme" value="trypsin" checked title="$title{enzyme}>
+  <label for="dig1">Trypsin</label>
+  <input type="radio" id="dig2" name="enzyme" value="argc">
+  <label for="dig2">Arg-C</label>
+  <input type="radio" id="dig3" name="enzyme" value="chymotrypsin">
+  <label for="dig3">Chymotrypsin</label>
+  <input type="radio" id="dig4" name="enzyme" value="gluc_de">
+  <label for="dig4">Glu-C DE</label>
+  <input type="radio" id="dig5" name="enzyme" value="gluc_d">
+  <label for="dig5">Glu-C D</label>
+  <input type="radio" id="dig6" name="enzyme" value="gluc_e">
+  <label for="dig6">Glu-C E</label>
+  <input type="radio" id="dig7" name="enzyme" value="lysc">
+  <label for="dig7">Lys-C</label>
+  <input type="radio" id="dig8" name="enzyme" value="trypsin_kr">
+  <label for="dig8">Trypsin KR</label>
+</tr>
+
+<tr>
+<td>Include in-silico digestion: &nbsp;&nbsp;</td>
+<td><input type="checkbox" id="digest" name="digest" title="$title{digest}"></td>
+</tr>
+
+<tr>
 <td>SRM Atlas build: &nbsp;&nbsp;</td>
 <td><select name="srmf" id="srmf" title="$title{srmatlas}">
 <option value="">None</option>
@@ -109,26 +136,6 @@ $sopts
 </select></td>
 </tr>
 
-<tr>
-<td>Digestion: &nbsp;&nbsp;</td>
-<td>  
-  <input type="radio" id="dig0" name="digest" value="none" checked title="$title{digest}">
-  <label for="dig0">None</label>
-  <input type="radio" id="dig1" name="digest" value="trypsin">
-  <label for="dig1">Trypsin</label>
-  <input type="radio" id="dig2" name="digest" value="argc">
-  <label for="dig2">Arg-C</label>
-  <input type="radio" id="dig4" name="digest" value="chymotrypsin">
-  <label for="dig4">Chymotrypsin</label>
-  <input type="radio" id="dig5" name="digest" value="gluc_de">
-  <label for="dig5">Glu-C DE</label>
-  <input type="radio" id="dig5" name="digest" value="gluc_e">
-  <label for="dig5">Glu-C E</label>
-  <input type="radio" id="dig3" name="digest" value="lysc">
-  <label for="dig3">Lys-C</label>
-  <input type="radio" id="dig3" name="digest" value="trypsin_kr">
-  <label for="dig3">Trypsin KR</label>
-</tr>
 
 <tr>
 <td>Proteome: &nbsp;&nbsp;</td>
@@ -222,6 +229,32 @@ onclick="javascript:wrap(\'sub\')"></td>
 </tr>
 
 <tr>
+<td>Enzyme: &nbsp;&nbsp;</td>
+<td>  
+  <input type="radio" id="dig1" name="enzyme" value="trypsin" checked title="$title{enzyme}>
+  <label for="dig1">Trypsin</label>
+  <input type="radio" id="dig2" name="enzyme" value="argc">
+  <label for="dig2">Arg-C</label>
+  <input type="radio" id="dig3" name="enzyme" value="chymotrypsin">
+  <label for="dig3">Chymotrypsin</label>
+  <input type="radio" id="dig4" name="enzyme" value="gluc_de">
+  <label for="dig4">Glu-C DE</label>
+  <input type="radio" id="dig5" name="enzyme" value="gluc_d">
+  <label for="dig5">Glu-C D</label>
+  <input type="radio" id="dig6" name="enzyme" value="gluc_e">
+  <label for="dig6">Glu-C E</label>
+  <input type="radio" id="dig7" name="enzyme" value="lysc">
+  <label for="dig7">Lys-C</label>
+  <input type="radio" id="dig8" name="enzyme" value="trypsin_kr">
+  <label for="dig8">Trypsin KR</label>
+</tr>
+
+<tr>
+<td>Include in-silico digestion: &nbsp;&nbsp;</td>
+<td><input type="checkbox" id="digest" name="digest" title="$title{digest}"></td>
+</tr>
+
+<tr>
 <td>SRM Atlas build: &nbsp;&nbsp;</td>
 <td><select name="srmf" id="srmf" title="$title{srmatlas}">
 <option value="">None</option>
@@ -229,26 +262,6 @@ $sopts
 </select></td>
 </tr>
 
-<tr>
-<td>Digestion: &nbsp;&nbsp;</td>
-<td>  
-  <input type="radio" id="dig0" name="digest" value="none" checked title="$title{digest}>
-  <label for="dig0">None</label>
-  <input type="radio" id="dig1" name="digest" value="trypsin">
-  <label for="dig1">Trypsin</label>
-  <input type="radio" id="dig2" name="digest" value="argc">
-  <label for="dig2">Arg-C</label>
-  <input type="radio" id="dig4" name="digest" value="chymotrypsin">
-  <label for="dig4">Chymotrypsin</label>
-  <input type="radio" id="dig5" name="digest" value="gluc_de">
-  <label for="dig5">Glu-C DE</label>
-  <input type="radio" id="dig5" name="digest" value="gluc_e">
-  <label for="dig5">Glu-C E</label>
-  <input type="radio" id="dig3" name="digest" value="lysc">
-  <label for="dig3">Lys-C</label>
-  <input type="radio" id="dig3" name="digest" value="trypsin_kr">
-  <label for="dig3">Trypsin KR</label>
-</tr>
 
 <tr>
 <td>Proteome: &nbsp;&nbsp;</td>
@@ -365,6 +378,7 @@ sub subm_job {
 
   my $srmf = param('srmf');
 
+  my $enzyme = param('enzyme');
   my $digest = param('digest');
 
   my $protf = param('protf');
@@ -436,7 +450,8 @@ sub subm_job {
     ($groupsf) and ($cmd .= "-g $jobid/$groupsf ");
   }
 
-  ($digest ne "none") and ($cmd .= "-d -z $digest ");
+  ($digest) and ($cmd .= "-d ");
+  $cmd .= "-z $enzyme ";
   ($srmf) and ($cmd .= "-s $srmf ");
   ($contsf) and ($cmd .= "-c $contsf ");
   ($protf) and ($cmd .= "-f $protf ");
@@ -449,7 +464,7 @@ sub subm_job {
   elsif ($colors eq "bmy") {
     $cmd .= '-k 648FFF,DC267F,FFB000 ';
   }
-    
+
   open(my $fh,'>>',$jobsf) or abort("subm open $jobsf $!");
   flock($fh,LOCK_EX) or abort("subm lock $jobsf $!");
   
@@ -458,11 +473,10 @@ sub subm_job {
   flock($fh,LOCK_UN) or abort("subm unlock $jobsf $!");
   close($fh);
 
+  logger("$email job $jobid queued, $cmd");
+
   print "The system will send an email to $email when the processing is finished.";
   print '<hr><a href="typic.cgi">typic</a></div>';
-
-  logger("$email job $jobid queued --- $cmd");
-  
   print end_html();
 }
 
@@ -665,10 +679,10 @@ sub logger {
     print "<p>Lock typic.log: $! <hr><a href=\"typic.cgi\">typic</a></div></body></html>";
     exit(1);
   }
-  seek($LOG,0,2);
+  seek($LOG,0,SEEK_END);
 
   printf $LOG "%s cgi %s port %s %s\n",
-              format_epoch(time),$ENV{REMOTE_ADDR},$ENV{REMOTE_PORT},encode("ASCII",$mess);
+    format_epoch(time),$ENV{REMOTE_ADDR},$ENV{REMOTE_PORT},encode("ASCII",$mess);
 
   flock($LOG,LOCK_UN);
   close($LOG);

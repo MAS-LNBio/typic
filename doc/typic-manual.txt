@@ -298,24 +298,21 @@ criteria:
 - for MaxQuant LC/MS samples, peptides with valid intensity values are
   preferred, peptides unique in sample groups are preferred and peptides
   unique in proteins are preferred.
-
 - for LC/MS data in agnostic format or when there are no LC-MS data,
   peptides unique in the reference proteome are preferred.
-  
 - peptides with modifications features reported in UniProt having
   types disulfide bond, modified residue, signal peptide,
   glycosylation site, ubiquitin and ubiquitin-like are ill-favored.
-  
 - peptides having methionines are ill-favored.
 - peptides having missing cleavages are ill-favored.
-- peptides with an acidic amino acid at an end or flanked by an acidic
-  amino acid are ill-favored.
+- peptides digested by trypsin with a flanking D or E amino acid are
+  ill-favored.
 
 
-The intensity-plots sheet will be included if MaxQuant data are
-provided as input.  This sheet will have an intensity plot for each
-peptide across samples.  If a groups file is also provided as input
-then samples will be colored by group in the intensity plots.
+The plots sheet will be included if MaxQuant data are provided as
+input.  This sheet will have an intensity plot for each peptide across
+samples.  If a groups file is also provided as input then samples will
+be colored by group in the intensity plots.
 
 
 The RT-plot will be included whenever quantitative data or iRTs data
@@ -464,24 +461,30 @@ A TSV file with experimental groups.
 
 
 
-Options for other sources of peptides:
-
--d
-Digest each protein in-silico with no misses and include the
-resulting peptides.  If no LC/MS data nor an SRM Atlas build is
-provided, digest is implied.
+Options related to the experiment:
 
 -z enzyme
-Select the enzyme among:
+Select the digestion enzyme among:
 argc           split at the C-terminus of every R
-chymotrypsin   split at the C-terminus of every F, L, W or Y
+chymotrypsin   split at the C-terminus of every F, Y, W, M or L
+                 not followed by an M or P
 gluc_de        split at the C-terminus of every D or E
+gluc_d         split at the C-terminus of every D
 gluc_e         split at the C-terminus of every E
 lysc           split at the C-terminus of every K
 trypsin        split at the C-terminus of every K or R not followed by a P
 trypsin_kr     split at the C-terminus of every K or R
 
 The default is trypsin.
+
+
+
+Options for other sources of peptides:
+
+-d
+Digest each protein in-silico with no misses and include the
+resulting peptides.  If no LC/MS data nor an SRM Atlas build is
+provided, digest is implied.
 
 -s file
 Include the peptides of a protein enlisted in SRM Atlas file in TSV format. 
