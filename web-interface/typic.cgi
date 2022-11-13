@@ -231,7 +231,7 @@ onclick="javascript:wrap(\'sub\')"></td>
 <tr>
 <td>Enzyme: &nbsp;&nbsp;</td>
 <td>  
-  <input type="radio" id="dig1" name="enzyme" value="trypsin" checked title="$title{enzyme}>
+  <input type="radio" id="dig1" name="enzyme" value="trypsin" checked title="$title{enzyme}">
   <label for="dig1">Trypsin</label>
   <input type="radio" id="dig2" name="enzyme" value="argc">
   <label for="dig2">Arg-C</label>
