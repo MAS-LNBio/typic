@@ -1366,9 +1366,8 @@ foreach $prot (@prots) {
 	}
       }
     }
-
     
-    ($patlas) and $sht1->write($r,$c++,$h{instruments});
+    ($patlas && ($peptidesf || $agnosticf || $srmf)) and $sht1->write($r,$c++,$h{instruments});
 
     push(@ranks,$rank);
     
@@ -1515,8 +1514,8 @@ foreach $prot (@prots) {
 	}
       }
     }
-
-    ($patlas) and $sht2->write($r,$c++,$h{instruments});
+    
+    ($patlas && ($peptidesf || $agnosticf || $srmf)) and $sht2->write($r,$c++,$h{instruments});
     
     $r++;
     $c=0;
@@ -1583,7 +1582,7 @@ foreach $prot (@prots) {
   else {
     include_tsv($sht1,"$dirname/glossary-bas-attributes.csv",$plainf,$boldf);
     include_tsv($sht2,"$dirname/glossary-bas-ranking.csv",$plainf,$boldf);
-    $r = 20
+    $r = 17;
   }
 
   $sht2->write($r++,0,"Color map",$boldf);
