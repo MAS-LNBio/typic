@@ -498,9 +498,9 @@ foreach $prot (@prots) {
   $unif = "$datad/$prot.xml";
   $unifaka = "$datad/$prot-aka.xml";
   $failf = "$datad/$prot-fail.xml";
+  $uprot = 1;
   
-  ### Download UniProt xml or use local files.
-  ### On fail skip this prot:
+  ### Download UniProt xml or use local files:
   if ((!-f $unif && !-f $unifaka) || $update) {
 
     (-f $unif) && unlink($unif);
@@ -512,7 +512,7 @@ foreach $prot (@prots) {
     if ($down eq 'fail') {
       $verb and print " unable to download from UniProt\n";
       $clean && push(@del,$failf);
-      next;
+      $uprot = 0;
     }
     elsif ($down ne $prot) {
       $unif = $unifaka;
@@ -529,7 +529,7 @@ foreach $prot (@prots) {
   else {
     if (-f $failf) {
       $verb and print " previous download attempt from UniProt failed\n";
-      next;
+      $uprot = 0;
     }
     elsif (-f $unifaka) {
       $unif = $unifaka;
@@ -796,7 +796,7 @@ foreach $prot (@prots) {
   
   ### Add peptides from digestion, if not incuded already.
   ### For such peps, also add coordinates:
-  if ($digest) {
+  if ($digest && $fasta) {
 
     ($f,$p) = digest($fasta,@{$enzyme{$enzyme}});
     @frag = @{$f};
@@ -1175,14 +1175,18 @@ foreach $prot (@prots) {
   ($peptidesf) and push(@W,('MQ Unique (Groups)','MQ Unique (Proteins)'));
   ($proteomef) and push(@W,('Occurrences in proteome sequences','IDs of proteome sequences',
 			    'Occurrences in gene sequences','IDs of gene sequences'));
-  push(@W,('PTMs','PTM evidences'));
+  ($uprot) and push(@W,('PTMs','PTM evidences'));
   ($contf) and push(@W,('Occurrences in contaminant sequences'));
   push(@W,('Methionines','Methionine positions','Missing cleavages','Missing cleavage positions'));
   ($agnosticf || $evidencef) and push(@W,'Retention time');
   push(@W,'Hydrophobicity index');
   (@smp_theta) and push(@W,('Theoretical retention time (wrt samples)'));
   (@irt_theta) and push(@W,('Theoretical retention time (wrt iRT)'));
-  push(@W,('Previous aa','First aa','Last aa','Next aa'));
+
+  ($uprot) and push(@W,('Previous aa'));
+  push(@W,('First aa','Last aa'));
+  ($uprot) and push(@W,('Next aa'));
+
   ($patlas && ($peptidesf || $agnosticf || $srmf)) and
     push(@W,'Instruments reported in PeptideAtlas experiments (from sample or SRM Atlas)');
   
@@ -1293,15 +1297,17 @@ foreach $prot (@prots) {
     }
     
     # UniProt features:
-    if (exists($h{fea})) {
-      $sht1->write($r,$c++,$h{fea});
-      $sht1->write($r,$c++,$h{exp});
-      $rank .= '2';
-    }
-    else {
-      $sht1->write($r,$c++,'-');      
-      $sht1->write($r,$c++,'-');
-      $rank .= '0';
+    if ($uprot) {
+      if (exists($h{fea})) {
+	$sht1->write($r,$c++,$h{fea});
+	$sht1->write($r,$c++,$h{exp});
+	$rank .= '2';
+      }
+      else {
+	$sht1->write($r,$c++,'-');      
+	$sht1->write($r,$c++,'-');
+	$rank .= '0';
+      }
     }
     
     # Occurrence in contaminants:
@@ -1338,10 +1344,10 @@ foreach $prot (@prots) {
     }
     
     # Predecessor, first, last and successor AAs:
-    $sht1->write($r,$c++,$h{paa},$rightf);
+    ($uprot) and ($sht1->write($r,$c++,$h{paa},$rightf));
     $sht1->write($r,$c++,$h{faa},$rightf);
     $sht1->write($r,$c++,$h{laa},$rightf);
-    $sht1->write($r,$c++,$h{naa},$rightf);
+    ($uprot) and ($sht1->write($r,$c++,$h{naa},$rightf));
 
     if ($enzyme =~ /^trypsin/) {
       if ($h{faa} eq 'D' || $h{faa} eq 'E') {
@@ -1351,11 +1357,13 @@ foreach $prot (@prots) {
 	$rank .= '0';
       }
 
-      if ($h{naa} eq 'D' || $h{naa} eq 'E') {
-	$rank .= '2';
-      }
-      else {
-	$rank .= '0';
+      if ($uprot) {
+	if ($h{naa} eq 'D' || $h{naa} eq 'E') {
+	  $rank .= '2';
+	}
+	else {
+	  $rank .= '0';
+	}
       }
     }
 
@@ -1394,9 +1402,14 @@ foreach $prot (@prots) {
     push(@W,'Occurrences in proteome sequences');
   }
   
-  push(@W,('PTMs','PTM evidences','Methionines','Missing cleavages'));
+  ($uprot) and push(@W,('PTMs','PTM evidences'));
 
-  ($enzyme =~ /^trypsin/) && push(@W,('First aa','Next aa'));
+  push(@W,('Methionines','Missing cleavages'));
+  
+  if ($enzyme =~ /^trypsin/) {
+    push(@W,('First aa'));
+    ($uprot) and push(@W,('Next aa'));
+  }
   
   ($patlas && ($peptidesf || $agnosticf || $srmf)) and
     push(@W,'Instruments reported in PeptideAtlas experiments (from sample or SRM Atlas)');
@@ -1471,13 +1484,15 @@ foreach $prot (@prots) {
       $sht2->write($r,$c++,$h{pomeocc},$h{pomeocc} > 1 ? $redrf : $greenrf);
     }
 
-    if (exists($h{fea})) {
-      $sht2->write($r,$c++,$h{fea},$redlf);
-      $sht2->write($r,$c++,$h{exp},$redlf);
-    }
-    else {
-      $sht2->write($r,$c++,'-',$greenrf);      
-      $sht2->write($r,$c++,'-',$greenrf);      
+    if ($uprot) {
+      if (exists($h{fea})) {
+	$sht2->write($r,$c++,$h{fea},$redlf);
+	$sht2->write($r,$c++,$h{exp},$redlf);
+      }
+      else {
+	$sht2->write($r,$c++,'-',$greenrf);      
+	$sht2->write($r,$c++,'-',$greenrf);      
+      }
     }
     
     $sht2->write($r,$c++,$h{metocc},$h{metocc} == 0 ? $greenrf : $redrf);
@@ -1491,11 +1506,13 @@ foreach $prot (@prots) {
 	$sht2->write($r,$c++,$h{faa},$greenrf);
       }
 
-      if ($h{naa} eq 'D' || $h{naa} eq 'E') {
-	$sht2->write($r,$c++,$h{naa},$redrf);
-      }
-      else {
-	$sht2->write($r,$c++,$h{naa},$greenrf);
+      if ($uprot) {
+	if ($h{naa} eq 'D' || $h{naa} eq 'E') {
+	  $sht2->write($r,$c++,$h{naa},$redrf);
+	}
+	else {
+	  $sht2->write($r,$c++,$h{naa},$greenrf);
+	}
       }
     }
 
@@ -1550,35 +1567,32 @@ foreach $prot (@prots) {
   }
 
   ### Attributes and ranking glossary:
+  $dirname = dirname(__FILE__);
+  $sht1 = $xx->add_worksheet('attributes-glossary');
+  $sht2 = $xx->add_worksheet('ranking-glossary');
   if ($peptidesf) {
-    $dirname = dirname(__FILE__);
-    $sht = $xx->add_worksheet('attributes-glossary');
-    include_tsv($sht,"$dirname/glossary-mq-attributes.csv",$plainf,$boldf);
-    $sht = $xx->add_worksheet('ranking-glossary');
-    include_tsv($sht,"$dirname/glossary-mq-ranking.csv",$plainf,$boldf);
+    include_tsv($sht1,"$dirname/glossary-mq-attributes.csv",$plainf,$boldf);
+    include_tsv($sht2,"$dirname/glossary-mq-ranking.csv",$plainf,$boldf);
+    $r = 30;
   }
   elsif ($agnosticf) {
-    $dirname = dirname(__FILE__);
-    $sht = $xx->add_worksheet('attributes-glossary');
-    include_tsv($sht,"$dirname/glossary-agn-attributes.csv",$plainf,$boldf);
-    $sht = $xx->add_worksheet('ranking-glossary');
-    include_tsv($sht,"$dirname/glossary-agn-ranking.csv",$plainf,$boldf);
+    include_tsv($sht1,"$dirname/glossary-agn-attributes.csv",$plainf,$boldf);
+    include_tsv($sht2,"$dirname/glossary-agn-ranking.csv",$plainf,$boldf);
+    $r = 23;
   }
   else {
-    $dirname = dirname(__FILE__);
-    $sht = $xx->add_worksheet('attributes-glossary');
-    include_tsv($sht,"$dirname/glossary-bas-attributes.csv",$plainf,$boldf);
-    $sht = $xx->add_worksheet('ranking-glossary');
-    include_tsv($sht,"$dirname/glossary-bas-ranking.csv",$plainf,$boldf);
+    include_tsv($sht1,"$dirname/glossary-bas-attributes.csv",$plainf,$boldf);
+    include_tsv($sht2,"$dirname/glossary-bas-ranking.csv",$plainf,$boldf);
+    $r = 20
   }
 
-  $sht->write(30,0,"Color map",$boldf);
-  $sht->write(31,0,"Most favorable",$greenlf);
-  $sht->write(31,1,"default color: green");
-  $sht->write(32,0,"Kind of favorable/Neutral",$graylf);
-  $sht->write(32,1,"default color: yellow");
-  $sht->write(33,0,"Least favorable",$redlf);
-  $sht->write(33,1,"default color: red");
+  $sht2->write($r++,0,"Color map",$boldf);
+  $sht2->write($r,0,"Most favorable",$greenlf);
+  $sht2->write($r++,1,"default color: green");
+  $sht2->write($r,0,"Kind of favorable/Neutral",$graylf);
+  $sht2->write($r++,1,"default color: yellow");
+  $sht2->write($r,0,"Least favorable",$redlf);
+  $sht2->write($r,1,"default color: red");
     
   ### Metadata:
   $sh = $xx->add_worksheet('metadata');
@@ -1587,14 +1601,20 @@ foreach $prot (@prots) {
   $c = 0;
 
   @W = ();
-  
-  if ($protaka) {
-    push(@W,"$protaka (aka $prot): ".length($fasta).' aa');
+
+  if ($uprot) {
+    if ($protaka) {
+      push(@W,"$protaka (aka $prot): ".length($fasta).' aa');
+    }
+    else {
+      push(@W,"$prot: ".length($fasta).' aa');
+    }
   }
   else {
-    push(@W,"$prot: ".length($fasta).' aa');
+    push(@W,"$prot: unable to download from UniProt");
   }
-  
+
+    
   push(@W,scalar(@peptides).' peptides');
   
   if ($peptidesf) {
@@ -1651,7 +1671,6 @@ if ($clean) {
 
 $verb and print "finished.\n";
 exit(0);
-
 
 
 
@@ -2282,6 +2301,8 @@ sub uprot_get_fasta {
 
   my $filename = shift;
 
+  (-e $filename && -r $filename && -s $filename) or return '';
+
   # Process xml:
   my $dom = XML::LibXML->load_xml(location => $filename);
   my $xpc = XML::LibXML::XPathContext->new($dom);
@@ -2305,6 +2326,8 @@ sub uprot_get_features {
   my $filename = shift;
   my $forestr = shift;
   my $namesr = shift;
+
+  (-e $filename && -r $filename && -s $filename) or return ();
 
   my %forest = %{$forestr};
   my %names = %{$namesr};  
