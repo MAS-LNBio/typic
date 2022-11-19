@@ -1,0 +1,187 @@
+#!/usr/bin/perl 
+# A daemon that dispatches typic.pl on data received by typic.cgi.
+# This file is part of Typic version 6.
+# 2022 Guilherme P. Telles.
+
+use Fcntl qw(:flock :seek);
+use POSIX qw(sysconf setsid close _SC_OPEN_MAX);
+use Archive::Zip qw(:ERROR_CODES :CONSTANTS);
+
+
+$wd = '/home/www/mas';
+$dwn = 'https://bug.ic.unicamp.br/mas/typic-dwn.cgi';
+$from = 'typic@bug.ic.unicamp.br';
+
+$jobsf = 'typic.jobs';  # The same goes in typic.cgi.
+$doned = 'finished'; # The same goes in typic-dwn.cgi.
+
+detach();
+
+$terminate = 0;
+$idle = 1;
+
+$SIG{HUP} = 'IGNORE';
+$SIG{TERM} = sub { ($idle) and exit(0);  $terminate = 1; };
+
+$| = 1;
+chdir($wd);
+umask(007);
+
+logger("started at $wd");
+sleep(60);
+
+while (1) {
+
+  if (-s $jobsf) {
+
+    $idle = 0;
+    
+    # Get a job:
+    open($fh,'+<',$jobsf) or abend("Unable to open $jobsf : $!");
+    flock($fh,LOCK_EX) or abend("Unable to lock $jobsf : $!");
+    
+    $job = <$fh>;
+
+    @A = ();
+    @A = <$fh>;
+    
+    seek($fh,0,SEEK_SET);
+    print $fh @A;
+    truncate($fh, tell($fh));
+
+    flock($fh,LOCK_UN) or abend("Unable to unlock $jobsf : $!");
+    close($fh);
+
+    chomp($job);
+    @job = split(/ /,$job,5);
+
+    $id = $job[0];
+    logger("job $id started");
+    
+    # Run typic.pl:
+    $cmd = "perl typic.pl $job[4] 1>$id/typic.out 2>$id/typic.err";
+
+    system($cmd);
+
+    $status = ($? >> 8) & 0x00FF;
+    logger("typic.pl exited with $status for job $id");
+    
+    $zipf = "$doned/$id.zip";
+    $zip = Archive::Zip->new();
+    $zip->addTreeMatching($id,'/','\.xlsx$');
+    $zip->addTreeMatching($id,'/','typic\.out');
+    $zip->addTreeMatching($id,'/','typic\.err');
+    
+    if ($zip->writeToFileNamed($zipf) != AZ_OK) {
+      logger("Write to $zipf failed for job $id");
+    }
+    else {
+      if (open(MAIL, "|/usr/sbin/sendmail -t")) {
+	print MAIL "To: $job[1]\n",
+	  "Reply-to: $from\n",
+	  "Subject: typic results\n",
+	  "Content-Type: text/html\n\n", 
+	  "<html><body>".
+	  "<br>Typic results: <a href=\"${dwn}?id=$id\">download</a>".
+	  "<br>The input data has been removed.".	  
+	  "<br>The results will be available for 7 days.".	  
+	  "</body></html>\n\n";
+	close(MAIL);
+	
+	$status = ($? >> 8) & 0x00FF;
+	($status) and logger("sendmail exited with $status");
+      }
+      else {
+	logger("open sendmail failed for job $id");
+      }
+    }
+      
+    unlink(glob "$id/*");
+    rmdir($id);
+
+    logger("job $id finished");
+    $idle = 1;
+  }
+  else {
+    if ($terminate) {
+      logger("stopped");
+      exit(0);
+    }
+    sleep(60);
+  }
+}
+
+
+
+################################################################################
+# string format_epoch($seconds)
+#
+# Format seconds from epoch as aaaa/mm/dd hh:mm:ss.
+
+sub format_epoch {
+
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(shift);
+
+  return sprintf("%04.0f/%02.0f/%02.0f %02.0f:%02.0f:%02.0f",
+                 $year+1900,$mon+1,$mday,$hour,$min,$sec);
+}
+
+
+
+################################################################################
+# logger($message)
+#
+# Add an entry to typic.log.
+
+sub logger {
+
+  my $mess = shift;
+
+  my $LOG;
+  open($LOG,'>>','typic.log') or exit(1);
+  flock($LOG,LOCK_EX) or exit(1);
+  seek($LOG,0,SEEK_END);
+  printf $LOG "%s daemon %s\n",format_epoch(time),$mess;
+  flock($LOG,LOCK_UN);
+  close($LOG);
+}
+
+
+
+################################################################################
+# abend($message)
+#
+# Add an entry to typic.log.
+
+sub abend {
+  logger(shift);
+  exit(1);
+}
+
+
+
+################################################################################
+sub detach {
+  
+  my $pid = fork();
+
+  ($pid) // die("typic-daemon fork: $!");
+
+  if ($pid) {
+    open(my $PID,">","/tmp/typic-daemon.pid");
+    print $PID "$pid\n";
+    close($PID);
+    exit(0);
+  }
+
+  $sid = POSIX::setsid();
+  ($sid > 0) or die("typic-daemon setsid: $!");
+
+  #for (0..(POSIX::sysconf(&POSIX::_SC_OPEN_MAX) || 1024)) {
+  #  POSIX::close($_);
+  #}
+  
+  open(STDIN,"<","/dev/null");
+  open(STDOUT,">","/dev/null");
+  open(STDERR,">","/dev/null");
+}
