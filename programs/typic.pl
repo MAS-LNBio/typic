@@ -390,7 +390,7 @@ elsif ($peptidesf) {
     }
   }
 
-  $verb and print 'MaxQuant files refers to ', scalar keys %sample, " proteins.\n"; 
+  $verb and print 'MaxQuant files refer to ', scalar keys %sample, " proteins.\n"; 
 }
 
 
@@ -647,7 +647,7 @@ foreach $prot (@prots) {
   
   ### Add peptides from samples given in MaxQuant format:
   elsif ($peptidesf && %sample && exists($sample{$prot})) {
-   
+
     @peps = ();
     for ($i=0; $i<@{$sample{$prot}}; $i+=$samplew) {
       $pep = uc($sample{$prot}[$i]);
@@ -830,7 +830,9 @@ foreach $prot (@prots) {
   ### Load UniProt features:
   @feat = uprot_get_features($unif,$ecoref,$econamesref);
 
-  
+  #use Data::Dumper;
+  #print Dumper(%H);
+
   ### Summon data on each peptide:
   @peptides = sort(keys(%H));
 
@@ -1532,9 +1534,8 @@ foreach $prot (@prots) {
 	$sh->insert_image("A$figpos{$pep}",$file);
       }
     }
-
-    if (@smp_theta || @irt_theta) {
-
+    
+    if ((@smp_theta || @irt_theta) && @peptides) {
       # Keep only the top 10 peptides in ranking:
       %aux = map { $_ => 1 } @peptides[0..9];
 
@@ -1614,7 +1615,7 @@ foreach $prot (@prots) {
   }
 
     
-  push(@W,scalar(@peptides).' peptides');
+  push(@W,scalar(@peptides).' peptides'. " @peptides");
   
   if ($peptidesf) {
     push(@W,"Peptides file: $peptidesf (" . (-s $peptidesf) . " bytes)"); 
@@ -1650,7 +1651,7 @@ foreach $prot (@prots) {
   if (!$nofigures) {
     foreach $pep (sort(keys(%figpos))) {
       $file = $protaka ? "$outd/$protaka-$pep.png" : "$outd/$prot-$pep.png";
-      unlink($file);
+      #unlink($file);
     }
     
     (-e "$outd/$prot-sample-rt.png") && unlink("$outd/$prot-sample-rt.png");
@@ -2975,8 +2976,8 @@ sub intensity_plots {
 
     # use Data::Dumper;
     # print Dumper($cc);
-    # use Devel::Cycle;
-    # find_cycle($cc);
+    #use Devel::Cycle;
+    #find_cycle($cc);
   }
 
   return $h;
