@@ -1615,7 +1615,7 @@ foreach $prot (@prots) {
   }
 
     
-  push(@W,scalar(@peptides).' peptides'. " @peptides");
+  push(@W,scalar(@peptides).' peptides');
   
   if ($peptidesf) {
     push(@W,"Peptides file: $peptidesf (" . (-s $peptidesf) . " bytes)"); 
