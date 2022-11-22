@@ -1221,7 +1221,7 @@ foreach $prot (@prots) {
     if (!$nofigures && $samplew > 3 &&
 	((!$protaka && -f "$outd/$prot-$pep.png") || ($protaka && -f "$outd/$protaka-$pep.png"))) {      
       $figpos{$pep} = $p;
-      $sht1->write_url($r,$c++,'internal:plots!A'.$p,undef,$pep);
+      $sht1->write($r,$c++,'internal:plots!A'.$p,undef,$pep);
       $p += int($iplotsh / 20) + 2;
     }
     else {
@@ -1426,7 +1426,7 @@ foreach $prot (@prots) {
     $sht2->write($r,$c++,$protaka ? $protaka : $prot);
 
     if (exists($figpos{$pep})) {
-      $sht2->write_url($r,$c++,'internal:figures!A'.$figpos{$pep},undef,$pep);
+      $sht2->write($r,$c++,'internal:plots!A'.$figpos{$pep},undef,$pep);
     }
     else {
       $sht2->write($r,$c++,$pep);
@@ -1651,7 +1651,7 @@ foreach $prot (@prots) {
   if (!$nofigures) {
     foreach $pep (sort(keys(%figpos))) {
       $file = $protaka ? "$outd/$protaka-$pep.png" : "$outd/$prot-$pep.png";
-      #unlink($file);
+      unlink($file);
     }
     
     (-e "$outd/$prot-sample-rt.png") && unlink("$outd/$prot-sample-rt.png");
